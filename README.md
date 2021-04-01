@@ -22,12 +22,10 @@ Please check out the [online demo](TBD).
 ```
 2. Create tabs.html
 ```html
-  <div class = "solid-ui-tabs"
-       data-source = "tabs.ttl"
-       data-selectedTab = 4
-  ></div>
-  <script src="../solid-ui/lib/webpack-bundle.js"></script>
-  <script src="./solid-ui-components.js"></script>
+  <div class = "solid-ui-tabs" data-source = "tabs.ttl"></div>
+  <script src="../node_modules/solid-ui/lib/webpack-bundle.js"></script>
+  <script src="../src/solid-ui-components.js"></script>
 ```
+3. All done.  Now when you open tabs.html it will show an interactive tabset.
 
 

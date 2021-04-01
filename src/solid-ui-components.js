@@ -83,7 +83,8 @@
     iframe.src = url.uri;
     iframe.width="100%";
     iframe.height="100%";
-    iframe.border="none";
+    iframe.style.border="none";
+    
     containingElement.innerHTML = "";
     containingElement.appendChild(iframe);
   }
