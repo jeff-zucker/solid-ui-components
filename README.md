@@ -2,7 +2,7 @@
 
 - generate high level HTML widgets from RDF data
 
-**WORK-IN-PROGRES** - not ready for use yet
+# WORK-IN-PROGRES - not ready for use yet
 
 ## Overview
 
