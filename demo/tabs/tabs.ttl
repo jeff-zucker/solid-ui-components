@@ -6,19 +6,19 @@
 
 :Tab1
   rdfs:label "About" ;
-  schema:url <about.html> .
+  schema:url <pages/about.html> .
  
 :Tab2
   rdfs:label "Create RDF" ;
-  schema:url <create-rdf.html> .
+  schema:url <pages/create-rdf.html> .
 
 :Tab3
   rdfs:label "Create HTML" ;
-  schema:url <create-html.html> .
+  schema:url <pages/create-html.html> .
 
 :Tab4
   rdfs:label "Advanced Usage" ;
-  schema:url <advanced-tabs.html> .
+  schema:url <pages/advanced-tabs.html> .
 
 :Tab5
   rdfs:label "RDF" ;
