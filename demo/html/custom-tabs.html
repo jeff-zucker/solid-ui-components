@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8" />
+  <title>Solid-UI Components - Examples</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://solidproject.org/assets/css/main.css">
+  <link rel="stylesheet" href="demo.css">
+</head><body>
+
+    <h1> Solid UI Componenets Demo </h1>
+
+<table><tr><td>
+
+    <div class = "solid-ui-tabset"
+         data-source = "tabs.ttl"
+    ><h2> Default Tabs </h2></div>
+
+    <div class = "solid-ui-tabset"
+         data-source = "tabs.ttl"
+         data-orientation = "left"
+         data-selectedTab = 1
+         data-backgroundColor = "#99eeee"
+    ><h2> Custom Tabs </h2></div>
+
+
+</td><td>
+
+   <div class="solid-ui-code"
+         data-source = "tabs.html"
+    ><h2> HTML </h2></div>
+
+   <div class="solid-ui-code"
+         data-source = "tabs.ttl"
+    ><h2> Turtle </h2></div>
+
+
+</td></tr></table>
+
+  <script src="../solid-ui/lib/webpack-bundle.js"></script>
+  <script src="./solid-ui-components.js"></script>
+
+</body></html>

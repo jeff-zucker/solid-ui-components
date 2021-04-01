@@ -1,0 +1,99 @@
+<!doctype html><html><head>
+  <title>Solid-UI Components - Default Tabs Example</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://solidproject.org/assets/css/main.css">
+</head>
+<body>
+  <div class="demo">
+
+    <div class = "solid-ui-tabset"
+         data-source = "tabs.ttl"
+    ></div>
+
+    <div class = "solid-ui-tabset"
+         data-source = "tabs.ttl"
+         data-orientation = "left"
+         data-backgroundColor = "#99eeee"
+         data-selectedTab = 1
+    ></div>
+
+  </div>
+
+  <script src="./webpack-bundle.js"></script> <!--from solid-ui/lib -->
+  <script>
+
+    const rdfs = UI.rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#');
+    const schema = UI.rdf.Namespace('http://schema.org/');
+
+    async function init(){
+      for(let elm of document.getElementsByClassName('solid-ui-tabset')){
+        let t =  await makeTabs( elm.dataset )
+        elm.appendChild( await t.render() );
+      }
+    }
+    init();
+
+async function makeTabs(dataset) {
+  let source = dataset.source;
+  const orientation = dataset.orientation || 0;
+  const backgroundColor = dataset.backgroundcolor || undefined;
+  let selected = dataset.selectedTab || 0;
+  if(!source.startsWith('http')) {
+    source = location.href.replace(/\/[^\/]*$/,'/') + source;
+  }
+  const kb = await load(source);
+  const current = UI.rdf.Namespace(source+"#");
+  const subject = current('TabSet');
+  const predicate = current('tabs');
+  let items = kb.match( subject, predicate );
+  items = (items.length > 0) ? items[0].object.elements : [];
+  let tabset = {
+    render: async () => UI.tabs.tabWidget({
+      orientation:orientation,
+      backgroundColor:backgroundColor,
+      subject,
+      predicate,
+      items,
+      renderTab: async (tabDiv,tabSubject)=>{
+        tabDiv.dataset.name = tabSubject.uri;
+        let label = kb.any( tabSubject, rdfs('label') );
+        if(label) {
+          tabDiv.innerText = label.value;
+        }
+        else {
+          tabDiv.innerText = tabSubject.uri.replace(/.*#/,'');
+        }
+      },
+      renderMain: async (bodyMain, subject) => {
+        let url = kb.any( subject, schema('url') );
+        let newBody = document.createElement('IFRAME');
+        newBody.src = url.uri;
+        newBody.width="100%";
+        newBody.height="100%";
+        newBody.border="none";
+        bodyMain.innerHTML = "";
+        bodyMain.appendChild(newBody);
+      },
+      selectedTab : selected ? items[selected].uri : 0
+    })
+  };
+  return(tabset);
+}
+  async function load( uri ){
+    let store = UI.rdf.graph();
+    let fetcher = UI.rdf.fetcher( store );
+    await fetcher.load( uri );
+    return store;
+  }
+
+</script>
+<style>
+div.solid-ui-tabset {
+  width:400px;
+  padding:2em;
+  height:300px;
+  float:left;
+}
+</style>
+</body>

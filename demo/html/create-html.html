@@ -1,0 +1,22 @@
+<link rel="stylesheet" href="https://solidproject.org/assets/css/main.css">
+<link rel="stylesheet" href="demo.css">
+
+<h3>Adding components to an HTML document</h3>
+
+<h4>a. Create a tabs component</h4>
+<pre>&lt;div class = "solid-ui-tabs"          // required class
+     data-source = "tabs.ttl"         // required RDF source
+     data-backgroundcolor = "red"     // optional tab color
+     data-selectedTab = 3             // optional selected tab number
+     data-orientation = "left"        // optional placement of tabs
+     data-subject = &lt;url>             // optional see README
+     data-predicate = &lt;url>           // optional see README
+     data-ordered = false             // optional see README
+>&lt;/div></pre>
+
+<h4>b. Import the solid-ui libraries</h4>
+<pre>&ltscript src="../solid-ui/lib/webpack-bundle.js">&lt;/script>
+&lt;script src="./solid-ui-components.js">&lt;/script>
+
+// NOTE : libraries must be included after all components</pre>
+</body></html>

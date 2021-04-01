@@ -1,0 +1,30 @@
+@prefix : <#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <http://schema.org/> .
+
+:TabSet :hasTabs ( :Tab1 :Tab2 :Tab3 :Tab4 :Tab5 :Tab6 ) .
+
+:Tab1
+  rdfs:label "About" ;
+  schema:url <about.html> .
+ 
+:Tab2
+  rdfs:label "Create RDF" ;
+  schema:url <create-rdf.html> .
+
+:Tab3
+  rdfs:label "Create HTML" ;
+  schema:url <create-html.html> .
+
+:Tab4
+  rdfs:label "Advanced Usage" ;
+  schema:url <advanced-tabs.html> .
+
+:Tab5
+  rdfs:label "RDF" ;
+  schema:url <tabs.ttl> .
+
+:Tab6
+  rdfs:label "HTML" ;
+  schema:url <tabs.html> ;
+  schema:potentialAction "preformat" .

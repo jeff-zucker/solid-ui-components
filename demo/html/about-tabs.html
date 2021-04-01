@@ -1,0 +1,45 @@
+<link rel="stylesheet" href="https://solidproject.org/assets/css/main.css">
+<link rel="stylesheet" href="demo.css">
+
+<p>The tabset you are viewing is generated from an RDF document included as a web page component.  You can see the complete code used to implement this in the RDF and HTML tabs.  Here's an overview of what's going on.</p>
+
+<p><b>1.</b> We create an RDF document containing tab definitions, which, at a minimum, contain a label and a URL.</p>
+<pre>:Tabset
+  schema:listuix:tabs( :Tab1 :Tab2 ).
+
+:Tab1
+  rdfs:label "Home";
+  schema:url &lt;https://example.org/home>.
+
+:Tab2
+  rdfs:label "Work";
+  schema:url &lt;https://example.org/work>.</pre>
+
+
+<p><b>2.</b> We create a tabs componenet in an HTML page pointing to the RDF tabs definition as the data-source.
+</p>
+<pre>&lt;div class="solid-ui-tabs" data-source="tabs.ttl">&lt;/div></pre>
+
+<p><b>3.</b> We import the solid-ui and solid-ui-components libraries</p>
+<pre>&ltscript src="../solid-ui/lib/webpack-bundle.js">&lt;/script>
+&lt;script src="./solid-ui-components.js">&lt;/script></pre>
+
+That's it. Once the libraries are loaded, HTML for the tabs will be automagically generated.
+
+
+There are three steps to A tab's component 
+
+:Tabset uix:tabs( ... ).
+  
+
+<a name="custom"><h2>Custom Tab Actions</h2></a>
+<p>
+A tab definition may optionally include a schema:potentialAction to specify the name of a javascript method to pre-process a tab's content.  For example, this displays an HTML page as preformatted rather than as HTML.
+</p>
+<pre>:Tab3
+    rdfs:label "HTML Sample" ;
+    schema:url &lt;example.html> ;
+    schema:potentialAction "preformat" .</pre>
+<p>
+The preformat action is supported by solid-ui-components.  Developers will nee to define any other actions themselves.  
+</p>
