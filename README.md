@@ -65,7 +65,7 @@ By default, we use ui:parts, and ui:part to find members in a group.
 For other ontologies, we need to define an alternate membership term
 and possibly set ui:inverse to true if the group has a "partOf" relationship.
 
-  * **ui:memberTerm** - term to indicate group membership, e.g. vcard:hasMember or ldp:contains
+  * **ui:memberTerm** - term to indicate group membership, e.g. vcard:hasMember
   * **ui:inverse** - if true, looks for memberOf relationship rather than default hasMember                                           
 
 For example, these are all the same thing as far as solid-ui-components is concerned:
