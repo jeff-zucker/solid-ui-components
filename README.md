@@ -89,6 +89,8 @@ Similarly, we may need to adjust some other ontology terms
   * **ui:authorTerm** -- term for the author of a post
   * **ui:dateTerm** -- term for the publish date of a post
 
+The last three terms will be useful for building blogs - it means that we can orgainize the blog as a series of RSS items, as ActivityPub or Schema articles, or any other ontology which has the basic building blocks of short posts.
+
 ### Other predicates
 
 Finally, there are some predicates that customize widgets:
