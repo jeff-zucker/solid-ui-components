@@ -78,7 +78,7 @@ For example, these are all the same thing as far as solid-ui-components is conce
 This one is the same except that it guarantees the order of the members:
 
 ```turtle
-    d) :Editors ui:parts (:X, :Y).
+    d) :Editors ui:parts (:X :Y).
 ```
 
 Similarly, we may need to adjust some other ontology terms  
