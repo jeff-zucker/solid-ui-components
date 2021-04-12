@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "highlight": "^0.2.4",
     "jsdom": "^16.5.2",
+    "solid-node-client": "^2.0.2",
     "solid-ui": "^2.4.1"
   }
 }

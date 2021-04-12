@@ -1,0 +1,67 @@
+@prefix : <#> .
+@prefix org: <https://www.w3.org/ns/org#> .
+@prefix skos: <http://www.w3.org/2008/05/skos#> .
+@prefix uix: <https://solid-uix.solidcommunity.net/ns#> .
+@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix source: <source.ttl#> .
+
+:MainTabset
+  ui:parts ( :Home :Administrators :Editors :Creators :CodeMenu :Presentation ).
+
+:CodeMenu
+  ui:tabSet :CodeMenu;
+  ui:orientation 1 ;
+  ui:backgroundColor "#6699ff" ;
+  ui:parts (
+    [ ui:label "demo.html" ; ui:preformat <demo.html> ] 
+    [ ui:label "ui.ttl" ; ui:target <ui.ttl> ] 
+    [ ui:label "source.ttl" ; ui:target <source.ttl> ] 
+  ) .
+
+# these are from another document using a different ontology
+# so we define some default terms to be able to walk its tree
+# then we can specify widgets to dislay its subjects in
+# 
+source:default ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
+:Administrators ui:descriptionList source:Administrators .
+:Editors ui:descriptionList source:Editors .
+:Creators ui:descriptionList source:Creators .
+
+
+#-----------------------------------
+# an item displayed from inline HTML
+#-----------------------------------
+:Home
+  ui:inline """
+<h1>Solid-uix</h1>
+<p>
+The basic idea : turn groups of things into widgets.  Groups can be people in a team, pages in a website, or anything which has a membership/containment relatationship and is stored as RDF. The widget can be a a set of tabs, a dropdown menu, a description list, or other UI component.  
+</p>
+<p>
+Links in widgets can go to other widgets, thus supporting the use of RDF to define the comlete interface of an app or site.  Here's the interface for this demo.  See the CodeMenu tab for the complete code
+</p>
+<p><pre style="margin-left:4em;color:#555;font-size:83%;">
+:MainTabset
+  ui:parts ( :Home :Administrators :Editors :Creators :CodeMenu :Presentation ).
+
+:CodeMenu
+  ui:tabSet :CodeMenu;
+  ui:orientation 1 ;
+  ui:backgroundColor "#6699ff" ;
+  ui:parts (
+    [ ui:label "demo.html" ; ui:preformat &lt;demo.html> ] 
+    [ ui:label "ui.ttl" ; ui:target &lt;ui.ttl> ] 
+    [ ui:label "source.ttl" ; ui:target &lt;source.ttl> ] 
+  ) .
+
+# these are from another document using a different ontology
+# so we define some default terms to be able to walk its tree
+# then we can specify widgets to dislay its subjects in
+# 
+source:default ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
+:Administrators ui:descriptionList source:Administrators .
+:Editors ui:descriptionList source:Editors .
+:Creators ui:descriptionList source:Creators .
+</pre></p>
+""" .
+
