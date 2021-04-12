@@ -8,17 +8,17 @@
   const ui = UI.rdf.Namespace('https://www.w3.org/ns/ui#');
 
   async function init(){
-    for(let elm of document.getElementsByClassName('uix-selectorPanel')){
+    for(let elm of document.getElementsByClassName('ui-selectorPanel')){
       let widget = await parseOptions( elm.dataset );
       let b = await selectorPanel( widget);
       elm.appendChild( b );
     }
-    for(let elm of document.getElementsByClassName('uix-selectorButton')){
+    for(let elm of document.getElementsByClassName('ui-selectorButton')){
       let widget = await parseOptions( elm.dataset );
       let b = await makeSelectorButton( widget,elm);
       elm.appendChild( b );
     }
-    for(let elm of document.getElementsByClassName('uix-tabs')){
+    for(let elm of document.getElementsByClassName('ui-tabs')){
       let iface = elm.dataset.ui;
       if(iface && !iface.startsWith('http')) {
         iface = location.href.replace(/\/[^\/]*$/,'/') + iface;
