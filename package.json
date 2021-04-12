@@ -1,18 +1,15 @@
 {
-  "name": "solid-uix",
+  "name": "solid-ui-components",
   "version": "1.0.0",
   "description": "",
-  "main": "rdf2list.js",
+  "main": "src/solid-ui-components.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Jeff Zucker",
+  "license": "MIT",
   "dependencies": {
-    "highlight": "^0.2.4",
-    "jsdom": "^16.5.2",
-    "solid-node-client": "^2.0.2",
     "solid-ui": "^2.4.1"
   }
 }
