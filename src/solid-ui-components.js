@@ -1,8 +1,5 @@
 ( ()=> {
     
-  const rdfs = UI.rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#');
-  const schema = UI.rdf.Namespace('http://schema.org/');
-
   const kb = UI.rdf.graph();
   const uix = UI.rdf.Namespace('https://solid-uix.solidcommunity.net/ns#');
   const ui = UI.rdf.Namespace('https://www.w3.org/ns/ui#');
@@ -55,9 +52,6 @@
     w.listType = w.listType ? w.listType.value : "hasMember";
 
     // memberTerm
-    //   default :includes or :memberOf depending on membershipStyle
-//    w.memberTerm = w.store.any( w.subject, uix("memberTerm" ) )
-//    w.memberTerm ||= w.store.any( uix('Default') );
     w.memberTerm = getMemberTerm(w.subject)
 
     if(w.listType==="hasMember")  w.memberTerm ||= ui("parts");
@@ -177,8 +171,7 @@
      button.addEventListener('click', async(event)=> {
        let content = await selectorPanel(o,containingElement);
        table.appendChild(content)
-       //await fillIframe( iframe, content.innerHTML );
-     });
+    });
      div.appendChild(button);
      div.appendChild(table);
      return div;
@@ -208,12 +201,7 @@
        let td = document.createElement('TD');
        let tr = document.createElement('TR');
        row.appendChild(text);
-row.onclick="alert(7)";
-row.onClick="alert(7)";
        row.addEventListener('click', function (event) {
-console.log(3333333333333333333);
-event.preventDefault();
-alert(8);
          callback(label,link,options,event);
        });
        td.appendChild(row);
@@ -430,10 +418,6 @@ alert(8);
     else if( action==="tabSet" ) {
       let w = await parseOptions({source:subject.uri});
       content = await tabs( w );
-//      containingElement.innerHTML="";
-//      containingElement.appendChild(content);
-//      return;
-      // content = content.innerHTML;
     }
     else if( action==="descriptionList" ) {
       let list = kb.any(subject,ui('descriptionList'));
@@ -442,12 +426,12 @@ alert(8);
       content = document.createElement('DIV');
       content.appendChild(b);
       content.style.overflow="auto";
-//      content.style.height="100%";
-//      content.style.overflow="auto";
-//      containingElement.innerHTML="";
-//      containingElement.appendChild(content);
-//      return;
-//      content = content.innerHTML;
+      //      content.style.height="100%";
+      //      content.style.overflow="auto";
+      //      containingElement.innerHTML="";
+      //      containingElement.appendChild(content);
+      //      return;
+      //      content = content.innerHTML;
     }
     else if(action==="selectorPanel") {
       let w = await parseOptions({source:subject.uri,store:kb});
@@ -467,8 +451,8 @@ alert(8);
       content.style.height="100%";
       containingElement.innerHTML="";
       containingElement.appendChild(content);
-//      const blobObj = await new Blob( [content], {type:'text/html'} ) ;
-//      iframe.src = URL.createObjectURL( blobObj );
+      //      const blobObj = await new Blob( [content], {type:'text/html'} ) ;
+      //      iframe.src = URL.createObjectURL( blobObj );
     }
   }
   init();
