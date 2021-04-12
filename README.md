@@ -109,6 +109,6 @@ A class for queries.
 
 ### Current Status
 
-I have a working demo but I'd like to get feedback on the ontology proposals before proceeding further. 
+I have a working demo of some of the predicates but I'd like to get feedback on the ontology proposals before proceeding further. 
 
 copyright &copy; Jeff Zucker 2021, may be freely distributed under an MIT license.
