@@ -1,7 +1,7 @@
 {
   "name": "solid-ui-components",
   "version": "1.0.0",
-  "description": "",
+  "description": "generate high level HTML UI components from RDF",
   "main": "src/solid-ui-components.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
