@@ -72,9 +72,9 @@ and possibly set ui:inverse to true if the group has a "partOf" relationship.
 
 For example, these are all the same thing as far as solid-ui-components is concerned:
 ```turtle
-    a) :Editors ui:part :X, :Y .
-    b) :Editors ui:memberTerm org:hasMember; org:hasMember :X, :Y.
-    c) :Editors ui:inverse true. :X ui:partOf :Editors. :Y ui:partOf :Editors.  
+  a) :Editors ui:part :X, :Y .
+  b) :Editors ui:memberTerm org:hasMember; org:hasMember :X, :Y.
+  c) :Editors ui:inverse true. :X ui:partOf :Editors. :Y ui:partOf :Editors.  
 ```
 
 This one is the same except that it guarantees the order of the members:
