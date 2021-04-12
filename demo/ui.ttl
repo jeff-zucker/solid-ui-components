@@ -6,7 +6,7 @@
 @prefix source: <source.ttl#> .
 
 :MainTabset
-  ui:parts ( :Home :Administrators :Editors :Creators :CodeMenu :Presentation ).
+  ui:parts ( :Home :Administrators :Editors :Creators :CodeMenu ).
 
 :CodeMenu
   ui:tabSet :CodeMenu;
