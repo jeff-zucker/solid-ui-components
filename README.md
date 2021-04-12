@@ -1,8 +1,6 @@
 # Solid UI Components
 
--- generate high level HTML widgets from RDF data
-
-## Work-in-Progress - please comment on proposed ontology
+-- generate high level HTML widgets from RDF data (Work in Progress)
 
 This library supports building apps and websites from an RDF description using a proposed expanded version of the solid-ui ontology.  You can use RDF to define a group of things and to specify a UI widget to display the things, then insert the widget into a web page with a brief HTML component.  Here is a minimal but complete working app :
 ```
