@@ -28,14 +28,14 @@ Each component has actions associated with it in the RDF.  So in addition to ope
 
 Developers can specify how a group should be dislayed using the following predicates :
 
-   * **ui:form**
-   * **ui:table**
-   * **ui:descriptionList**
-   * **ui:tabset**
-   * **ui:menu**
-   * **ui:tree**
-   * **ui:slideshow**
-   * **ui:blog**
+   * **ui:descriptionList** - a group to be displayed as an HTML description list
+   * **ui:tabset** - a group to be displayed as a set of tabs
+   * **ui:form** - a ui:Form for a group or other subject
+   * **ui:table**  - a group to be displayed as a table
+   * **ui:menu** - a group to be displayed as a dropdown menu
+   * **ui:tree** - a group to be displayed as an expandable/collapsable tree
+   * **ui:slideshow** - a group to be displayed as a slideshow presentation  
+   * **ui:blog** - a group to be displayed as a set of articles
 
 A group, in the current context, is any RDF subject which has a membership/containment relationship with one or more objects.  Groups can be expressed as an RDF Collection, as a URI to an RDF Collection or list, or as a SPARQL query resulting in an RDF Collection or list. Here are some examples :
 
@@ -85,7 +85,7 @@ Similarly, we may need to adjust some other ontology terms
   
   * **ui:labelTerm** - term to indicate label, e.g. rdfs:label or dc:title     
   * **ui:linkTerm** - term for links, e.g. schema:url or bookm:recalls         
-  * **ui:descriptionTerm** - term for a blog text field e.g. rdfs:comment or schema:description
+  * **ui:descriptionTerm** - term for a blog text field e.g. rdfs:comment or schema:description rss:summary
   * **ui:authorTerm** -- term for the author of a post
   * **ui:dateTerm** -- term for the publish date of a post
 
