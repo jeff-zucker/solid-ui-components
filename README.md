@@ -5,13 +5,16 @@
 This library supports building apps and websites from an RDF description using a proposed expanded version of the solid-ui ontology.  You can use RDF to define a group of things and to specify a UI widget to display the things, then insert the widget into a web page with a brief HTML component.  Here is a minimal but complete working app :
 ```
     In demo.html  
+
         <div class="ui-tabset" data-souce="myTurtleDoc.ttl#MyTabs"></div>
         <script src="solid-ui"></script>
         <script src="solid-ui-components"></script>
         
     In myTurtleDoc.ttl
+
          @prefix : <#> .
          @prefix ui: <https://www.w3.org/ns/ui#> .
+
          :MyTabs ui:tabset ( :Home :Editors :Survey ) .
          :Home ui:link <home.html> .
          :Editors ui:descriptionList <ourTeam.ttl#Editors> . 
