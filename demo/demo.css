@@ -1,31 +1,35 @@
-        * {
-            font-family : Sans-Serif;
-            font-size : large;
-        }
-        div.uix-tabs {
+/* top tabset container */
+        div.ui-tabset {
             margin:1em;
             width:800px;
-            height:700px;
+            // height:700px;
         }
-        div.uix-tabs main main main {
+/* inner tabset container */
+        div.ui-tabset main main main {
             border:none;
             height:600px !important;
         }
-        div.uix-tabs main main {
+/* tabset content area */
+        div.ui-tabset main main {
             border:none !important;
         }
 /* main tabset tabs */
-        uix-tabset-container > nav div {
+        ui-tabset-container > nav div {
             border-radius:4px 4px 0 0;
             margin-right:0.75em;
         }
 /* inner tabset tabs */
-        .uix-tabset-container .uix-tabset-container > nav div {
+        .ui-tabset-container .ui-tabset-container > nav div {
             padding:0.5em !important;
             border-radius:0 0 0 0 !important;
             margin-bottom:0 !important;
         }
-        div.uix-tabs p {
+/* misc. demo stuff */
+        div.ui-tabset p {
             padding-left:1em;
             padding-right:1em;
+        }
+        * {
+            font-family : Sans-Serif;
+            font-size : large;
         }

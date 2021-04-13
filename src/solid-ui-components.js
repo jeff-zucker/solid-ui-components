@@ -15,7 +15,7 @@
       let b = await makeSelectorButton( widget,elm);
       elm.appendChild( b );
     }
-    for(let elm of document.getElementsByClassName('ui-tabs')){
+    for(let elm of document.getElementsByClassName('ui-tabset')){
       let iface = elm.dataset.ui;
       if(iface && !iface.startsWith('http')) {
         iface = location.href.replace(/\/[^\/]*$/,'/') + iface;
@@ -260,7 +260,7 @@
       })
     };
     tabsetDOM = await tabset.render();
-    tabsetDOM.classList.add("uix-tabset-container");
+    tabsetDOM.classList.add("ui-tabset-container");
     // post-process the tabset dom we got from Solid-UI
 
     // main[0] underlies the mains of each tab 
@@ -406,6 +406,7 @@
       div.innerHTML = content;
       content = div;
       content.style.overflow="auto";
+      content.style.height="100%";
     }
     else if( action==="preformat" ) {
       let thing = kb.any(subject, ui('preformat')) || {};
@@ -426,7 +427,7 @@
       content = document.createElement('DIV');
       content.appendChild(b);
       content.style.overflow="auto";
-      //      content.style.height="100%";
+      // content.style.height="100%";
       //      content.style.overflow="auto";
       //      containingElement.innerHTML="";
       //      containingElement.appendChild(content);
@@ -449,10 +450,13 @@
     }
     if(content){
       content.style.height="100%";
+      // content.style.overflow="auto !important";
       containingElement.innerHTML="";
       containingElement.appendChild(content);
-      //      const blobObj = await new Blob( [content], {type:'text/html'} ) ;
-      //      iframe.src = URL.createObjectURL( blobObj );
+      //content = content.innerHTML;
+      //const blobObj = await new Blob( [content], {type:'text/html'} ) ;
+      //iframe.src = URL.createObjectURL( blobObj );
+      //containingElement.appendChild(iframe);
     }
   }
   init();
