@@ -51,7 +51,8 @@ A ui:DataSource is anything that resolves to a membership/containment relationsh
    :MyTabset a ui:Tabset; ui:dataSource <http://examle.com/#Editors> .
    :MyResults a ui:table; ui:dataSource [ ui:endpoint <x>; ui:query """y""" ] .
 ```                                  
-When only a single page is to be displayed, the data source may be a simple URI```turtle.
+When only a single page is to be displayed, the data source may be a simple URI
+```turtle.
    :MyPage1 a ui:Link; ui:dataSource <foo.html> .
 ```
 
