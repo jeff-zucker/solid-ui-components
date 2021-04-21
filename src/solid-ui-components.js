@@ -1,7 +1,7 @@
 ( ()=> {
-    
-  const kb = UI.rdf.graph();
-  const uix = UI.rdf.Namespace('https://solid-uix.solidcommunity.net/ns#');
+
+  const kb = UI.store;
+  const rdf = UI.rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
   const ui = UI.rdf.Namespace('https://www.w3.org/ns/ui#');
 
   async function init(){
@@ -10,22 +10,20 @@
       let b = await selectorPanel( widget);
       elm.appendChild( b );
     }
-    for(let elm of document.getElementsByClassName('ui-selectorButton')){
-      let widget = await parseOptions( elm.dataset );
-      let b = await makeSelectorButton( widget,elm);
-      elm.appendChild( b );
-    }
     for(let elm of document.getElementsByClassName('ui-tabset')){
-      let iface = elm.dataset.ui;
-      if(iface && !iface.startsWith('http')) {
-        iface = location.href.replace(/\/[^\/]*$/,'/') + iface;
-        await load( iface );
-        elm.dataset.iface = iface;
-      }
       let widget = await parseOptions( elm.dataset );
       let t = await tabs( widget, elm );
-      elm.appendChild(t );
+      elm.appendChild( t );
     }
+    for(let elm of document.getElementsByClassName('ui-menu')){
+      let widget = await parseOptions( elm.dataset );
+      let m = await menu( widget, elm );
+      elm.appendChild( m );
+    }
+  }
+
+  async function menu(o){
+    console.log(o);
   }
 
   async function parseOptions(o){
@@ -43,27 +41,25 @@
     w.store ||= kb
     w.store = await load( w.uri );
 
-    let defaults = getDefaults();
-    let cfg = defaults.setting || {};
+    w.sourceNode =  findWidgetSource(w.subject);
 
     // membershipStyle 
     //   hasMember or memberOf
-    w.listType = w.store.any( w.subject, uix("membershipStyle") );
-    w.listType = w.listType ? w.listType.value : "hasMember";
+    w.listType = w.store.any( w.subject, ui("inverse") );
+    w.listType = w.listType ?"memberOf" :"hasMember";
 
     // memberTerm
     w.memberTerm = getMemberTerm(w.subject)
 
     if(w.listType==="hasMember")  w.memberTerm ||= ui("parts");
-    else  w.memberTerm ||= uix("memberOf");
+    else  w.memberTerm ||= ui("partOf");
 
     // labelTerm
-    w.labelTerm = w.store.any( w.subject, uix("labelTerm") )
+    w.labelTerm = w.store.any( w.subject, ui("labelTerm") )
     w.labelTerm ||= ui("label");
-    w.labelTerm ||= w.store.any( uix('Default'), uix('labelTerm') );
 
     // linkTerm
-    w.linkTerm = w.store.any( w.subject, uix("linkTerm") ) 
+    w.linkTerm = w.store.any( w.subject, ui("linkTerm") ) 
     w.linkTerm ||= ui("target");
 
     // orientation / selectedtab / backgroundcolor
@@ -72,15 +68,8 @@
     w.backgroundcolor = getBackgroundColor(w.subject);
 
     // items
-    w.items = w.store.match( w.subject, w.memberTerm );
-
-    if(!w.items || w.items.length===0) {
-      console.error("No items for " + w.subject);
-      return w;
-    }
-
-    if(w.items[0].object && w.items[0].object.termType==="Collection"){
-      w.items = (w.items.length === 1 ) ? w.items[0].object.elements : [];
+    if(w.sourceNode.termType==="Collection"){
+      w.items = w.sourceNode.elements || [];
     }
     else {
       if(w.listType==="memberOf"){
@@ -90,41 +79,44 @@
         w.items = w.store.each( w.subject, w.memberTerm );
       }
     }
+
+    if(!w.items || w.items.length===0) {
+      console.error("No items for " + w.subject);
+      return w;
+    }
     for(var i of w.items){
        fixLink(i);
     }
     return w;
   }
-  function getDefaults (){
-    let js = {};
-    let defaults = kb.match( uix('Default' ) ) ;
-    for(var d of defaults){
-      let label = UI.utils.label(d.predicate);
-      if(label==="setting") {
-        let pair = d.object.value.split(/ /);
-        js[label]={};
-        js[label][pair[0]] = pair[1]
-      }
+
+  function findWidgetType(subject){
+      let type = kb.match(subject,rdf('type')).filter(t=>{ 
+        return t.object.value.match(ui('').value)
+      })
+      type = type && type.length ? type[0].object.value : "";
+      return type.replace( ui('').value, '' );
     }
-    return(js);
-  }
   function getBackgroundColor( subject ){
+      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
       let pred = kb.any(subject,ui('backgroundColor')) 
-              || kb.any(uix('Default'),ui('backgroundColor'));
+              || kb.any( doc(''),ui('backgroundColor') )
       return pred ? pred.value : null;
   }
   function getOrientation( subject ){
+      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
       let pred = kb.any(subject,ui('orientation'),undefined) 
-              || kb.any(uix('Default'),ui('orientation'),undefined);
+              || kb.any( doc(''),ui('orientation') )
       return pred ? pred.value : 0;
   }
   function getSelectedTab( subject ){
+      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
       let pred = kb.any(subject,ui('selectedTab')) 
-              || kb.any(uix('Default'),ui('selectedTab'));
+              || kb.any( doc(''),ui('selectedTab') )
       return pred ? pred.value : 0;
   }
   function fixLink( subject ){
-      let pred = kb.any(subject,uix('linkTerm')) || ui("target")
+      let pred = kb.any(subject,ui('linkTerm')) || ui("target")
       link = kb.any( subject,pred );
       if(!link) {
         kb.add( subject,pred,UI.rdf.namedNode('http://example.org/') );
@@ -132,33 +124,28 @@
   }
   function getLabel( subject, parent ){
       let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,uix('labelTerm')) 
-              || kb.any( doc('default'),ui('labelTerm') )
+      let pred = kb.any(subject,ui('labelTerm')) 
+              || kb.any( doc(''),ui('labelTerm') )
               || kb.any(subject,ui('label'));
       return( pred ? pred.value : UI.utils.label(subject) );
   }
   function getLabelTerm( subject, parent ){
       let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,uix('labelTerm')) 
-              || kb.any( doc('default'),ui('labelTerm') )
+      let pred = kb.any(subject,ui('labelTerm')) 
+              || kb.any( doc(''),ui('labelTerm') )
               || kb.any(subject,ui('label'))
       return( pred ? pred : subject );
   }
   function getMemberTerm( subject ){
       let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
       let pred = kb.any(subject,ui('memberTerm')) 
-              || kb.any( doc('default'),ui('memberTerm') )
-      return( pred ? pred : ui("parts") );
-  }
-  function getMemberTermOLD( subject ){
-      let pred = kb.any(subject,uix('memberTerm')) 
-              || kb.any( uix('Default'),uix('memberTerm') )
+              || kb.any( doc(''),ui('memberTerm') )
       return( pred ? pred : ui("parts") );
   }
   function getMemberPred( subject ){
       let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,uix('memberTerm')) 
-              || kb.any( doc('default'),ui('memberTerm') )
+      let pred = kb.any(subject,ui('memberTerm')) 
+              || kb.any( doc(''),ui('memberTerm') )
       return( pred ? pred.value : ui("parts").value );
   }
 
@@ -167,7 +154,7 @@
      let button = document.createElement('BUTTON');
      let div =  document.createElement('DIV');
      let table =  document.createElement('DIV');
-     button.innerText = getLabel(o.subject,uix('label'));
+     button.innerText = getLabel(o.subject,ui('label'));
      button.addEventListener('click', async(event)=> {
        let content = await selectorPanel(o,containingElement);
        table.appendChild(content)
@@ -222,7 +209,7 @@
     if(selected>o.items.length) selected = 0;
 
     // Add in extra tabs
-    let xtras=o.store.each(o.subject,uix('additionalTabs'))
+    let xtras=o.store.each(o.subject,ui('additionalTabs'))
     if( xtras && xtras[0] ){
       xtras = xtras[0].elements; // get items from Collection
       for(x of xtras.reverse() ){
@@ -347,7 +334,7 @@
       let labelPred = getLabel(subject,parent);
       if( labelPred && p.predicate.value.match(labelPred) ) continue;
       if( memberPred && p.predicate.value.match(memberPred)  ) continue;
-      if( p.predicate.value.match(uix('').value)  ) continue;
+//      if( p.predicate.value.match(uix('').value)  ) continue;
       if( p.predicate.value.match(ui('').value)  ) continue;
       let dd = document.createElement('DD');
       let i = document.createElement('I');
@@ -386,20 +373,57 @@
     }
   }
   function findLink( subject ){
-    let link = kb.any( subject, uix('linkTerm') )  
+//    let link = kb.any( subject, uix('linkTerm') )  
+//            || kb.any( subject, ui('target') );  
+    let link = kb.any( subject, ui('linkTerm') )  
             || kb.any( subject, ui('target') );  
     link = link ? link.value :null;
     if(link.match(/http:.?\/\/example/)) link = null;
     return link;
   }
 
+  function findWidgetSource (subject){
+    let sourceNode =  kb.any(subject,ui('dataSource')) || {};
+    if(!sourceNode.termType) return sourceNode;
+    if(sourceNode.termType==="Collection")
+      return sourceNode
+    if(sourceNode.termType==="BlankNode") {
+      sourceNode =  kb.any(subject,ui('dataSource'))
+      console.log(44,sourceNode);
+    }
+    if(sourceNode.termType==="NamedNode") {
+      return sourceNode.value;
+    }
+  }
+
+  async function form(o){
+    const already = {};
+    const container = o.container || document.createElement("div");
+    const doc = o.document || o.subject.doc();
+    const dom = o.dom || window.document;
+    await UI.store.fetcher.load(o.form);
+    await UI.store.fetcher.load(o.subject);
+console.log(o.subject,o.form);
+    UI.widgets.appendForm(dom, container, already, o.subject, o.form, doc);
+    return container;
+  }
+
   async function renderLink ( url, options, subject, containingElement ){
-    let action = findAction(subject) || "showWebPage";
-    let link = findLink(subject);
+    let action = findWidgetType(subject) || "showWebPage";
+    let link = findWidgetSource(subject);
     let iframe = makeIframe();
     let content;
-    if(action==="inline"){
-      content = kb.any(subject,ui('inline'));
+
+    if(action==="FormDefinition"){
+       content = await form({
+         form :  kb.any(subject,ui('form')),
+         subject : kb.any(subject,ui('formSubject')),
+         document : kb.any(subject,ui('formSubjectDocument')),
+       });    
+       console.log(content);
+    }
+    if(action==="Inline"){
+      content = kb.any(subject,ui('inlineContent'));
       content = content ? content.value : "";
       let div = document.createElement('DIV');
       div.classList.add = "inline";
@@ -408,22 +432,23 @@
       content.style.overflow="auto";
       content.style.height="100%";
     }
-    else if( action==="preformat" ) {
-      let thing = kb.any(subject, ui('preformat')) || {};
-      let r = await fetch(thing.value);
+    else if( action==="Preformat" ) {
+      // let thing = kb.any(subject, ui('Preformat')) || {};
+      // let r = await fetch(thing.value);
+      let r = await fetch(link);
       let text = await r.text();
       content = document.createElement('PRE');
       content.innerText = text;
       content.style.overflow="auto";
     }
-    else if( action==="tabSet" ) {
+    else if( action==="Tabset" ) {
       let w = await parseOptions({source:subject.uri});
       content = await tabs( w );
     }
-    else if( action==="descriptionList" ) {
-      let list = kb.any(subject,ui('descriptionList'));
-      let w = await parseOptions({source:list.uri,store:kb});
-      let b = await descriptionList( list,kb,w );
+    else if( action==="DescriptionList" ) {
+      link = UI.rdf.namedNode(link);
+      let w = await parseOptions({source:link.uri,store:kb});
+      let b = await descriptionList( link,kb,w );
       content = document.createElement('DIV');
       content.appendChild(b);
       content.style.overflow="auto";
@@ -443,7 +468,7 @@
       content = content.innerHTML;
       content.style.overflow="auto";
     }
-    else if(action==="showWebPage") {
+    else if(action==="Link" || action==="showWebPage") {
       iframe.src = link;
       containingElement.innerHTML = "";
       containingElement.appendChild(iframe);

@@ -16,10 +16,10 @@ Developers can specify components by combining a UI widget (menu, tabset, form, 
          @prefix : <#> .
          @prefix ui: <https://www.w3.org/ns/ui#> .
 
-         :MyTabs a ui:Tabset; ui:dataSource ( :Home :Editors :Survey ) .
-         :Home a ui:Link; ui:dataSource <home.html> .
+         :MyTabs  a ui:Tabset; ui:dataSource ( :Home :Editors :Survey ) .
+         :Home    a ui:Link; ui:dataSource <home.html> .
          :Editors a ui:DescriptionList; ui:dataSource <ourTeam.ttl#Editors> . 
-         :Survey a ui:Form; ui:dataSource <mySurvey.ttl#SurveyForm> .
+         :Survey  a ui:Form; ui:dataSource <mySurvey.ttl#SurveyForm> .
 ```         
 Opening demo.html should display three tabs. When the first tab is clicked,
 display the contents of home.html. When the second tab is clicked, display 
@@ -28,19 +28,21 @@ is clicked, display a solid-ui form.
 
 ### The UI widgets
 
-The goal is to support at least the following widgets :
+These widgets are working in the current repo :
 
    * ui:Form
    * ui:Table
-   * ui:DescriptionList
    * ui:Tabset
+   * ui:DescriptionList
    * ui:SelectorPanel
+
+These are planned :
+
    * ui:Menu
    * ui:Tree
    * ui:Slideshow
    * ui:Blog
 
-Currently the first five widgets are working and the others are in progress.
 
 ### Data Sources
 
@@ -54,6 +56,7 @@ A ui:DataSource is anything that resolves to a membership/containment relationsh
 When only a single page is to be displayed, the data source may be a simple URI
 ```turtle.
    :MyPage1 a ui:Link; ui:dataSource <foo.html> .
+   :MyPage2 a ui:Preformat; ui:dataSource <foo.html> .
 ```
 
 ### Customizing Data Sources
@@ -76,15 +79,29 @@ Similarly, we may need to adjust some other ontology terms
   
   * **ui:labelTerm** - term to indicate label, e.g. rdfs:label or dc:title     
   * **ui:linkTerm** - term for links, e.g. schema:url or bookm:recalls         
-  * **ui:descriptionTerm** - term for a blog text field e.g. rdfs:comment or schema:description
-  * **ui:authorTerm** -- term for the author of a post
-  * **ui:dateTerm** -- term for the publish date of a post
 
-The last three terms will be useful for building blogs - it means that we can orgainize the blog as a series of RSS items, as ActivityPub or Schema articles, or any other ontology which has the basic building blocks of short posts.
+### Ontology Term Defaults
 
-### Other predicates
+I also propose a way to declare default terms for an entire document.  For example, if we have multiple dataSources in a document, all using "skos:prefLabel" as the label term, we can declare it once for the whole document rather than once per dataSource, so that #1 below is the same as #2:
+```turtle
+  a) <>  ui:labelTerm skos:prefLabel. 
 
-Finally, there are some predicates that customize widgets:
+  b) :Administrators  ui:labelTerm skos:prefLabel. 
+     :Editors   ui:labelTerm skos:prefLabel. 
+     :Creators   ui:labelTerm skos:prefLabel. 
+```
+
+### Other terms
+
+A class to support calling forms from RDF.  This basically lets developers use RDF to specify the last three arguments to UI.widgets.appendForm().
+```turtle
+  [] a ui:FormDefinition;
+     ui:subject <URIofFormSubject> ;
+     ui:form <URIofForm> ;
+     ui:subjectDocument <URIofFormSubjectDocument> . # default = subject.doc()
+```
+
+Finally, there are some predicates that customize widgets appearance:
 
   * **ui:orientation** - placement
   * **ui:backgroundColor** -- background color

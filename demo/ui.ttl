@@ -4,64 +4,67 @@
 @prefix uix: <https://solid-uix.solidcommunity.net/ns#> .
 @prefix ui: <https://www.w3.org/ns/ui#> .
 @prefix source: <source.ttl#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix j: <https://jeff-zucker.solidcommunity.net/public/form.ttl#> .
 
 :MainTabset
-  ui:parts ( :Home :Administrators :Editors :Creators :CodeMenu ).
+  a ui:Tabset;
+  ui:dataSource (:Home :Administrators :Editors :Creators :CodeMenu :Survey).
+
+:Survey
+  a ui:FormDefinition ;
+  ui:form j:Survey ;
+  ui:formSubject j:MySurveyData .
 
 :CodeMenu
-  ui:tabSet :CodeMenu;
   ui:orientation 1 ;
   ui:backgroundColor "#6699ff" ;
-  ui:parts (
-    [ ui:label "demo.html" ; ui:preformat <demo.html> ] 
-    [ ui:label "ui.ttl" ; ui:target <ui.ttl> ] 
-    [ ui:label "source.ttl" ; ui:target <source.ttl> ] 
+  a ui:Tabset;
+  ui:dataSource (
+    [ ui:label "demo.html" ; a ui:Preformat; ui:dataSource <demo.html> ] 
+    [ ui:label "ui.ttl" ; a ui:Link; ui:dataSource <ui.ttl> ] 
+    [ ui:label "source.ttl" ; a ui:Link; ui:dataSource <source.ttl> ] 
   ) .
 
 # these are from another document using a different ontology
 # so we define some default terms to be able to walk its tree
 # then we can specify widgets to dislay its subjects in
 # 
-source:default ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
-:Administrators ui:descriptionList source:Administrators .
-:Editors ui:descriptionList source:Editors .
-:Creators ui:descriptionList source:Creators .
+source: ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
+:Administrators a ui:DescriptionList; ui:dataSource source:Administrators .
+:Editors a ui:DescriptionList; ui:dataSource source:Editors .
+:Creators a ui:DescriptionList; ui:dataSource source:Creators .
 
 
 #-----------------------------------
 # an item displayed from inline HTML
 #-----------------------------------
 :Home
-  ui:inline """
+  a ui:Inline;
+  ui:inlineContent """
 <h1>Solid-uix</h1>
 <p>
 The basic idea : turn groups of things into widgets.  Groups can be people in a team, pages in a website, or anything which has a membership/containment relatationship and is stored as RDF. The widget can be a a set of tabs, a dropdown menu, a description list, or other UI component.  
 </p>
 <p>
-Links in widgets can go to other widgets, thus supporting the use of RDF to define the comlete interface of an app or site.  Here's the interface for this demo.  See the CodeMenu tab for the complete code
+Links in widgets can go to other widgets, thus supporting the use of RDF to define the complete interface of an app or site.  Here's the interface for this demo.  See the CodeMenu tab for the complete code
 </p>
 <p><pre style="margin-left:4em;color:#555;font-size:83%;">
 :MainTabset
-  ui:parts ( :Home :Administrators :Editors :Creators :CodeMenu :Presentation ).
-
-:CodeMenu
-  ui:tabSet :CodeMenu;
-  ui:orientation 1 ;
-  ui:backgroundColor "#6699ff" ;
-  ui:parts (
-    [ ui:label "demo.html" ; ui:preformat &lt;demo.html> ] 
-    [ ui:label "ui.ttl" ; ui:target &lt;ui.ttl> ] 
-    [ ui:label "source.ttl" ; ui:target &lt;source.ttl> ] 
+  a ui:Tabset ;
+  ui:dataSource ( 
+    :Home :Administrators :Editors :Creators :CodeMenu :Presentation
   ) .
 
-# these are from another document using a different ontology
-# so we define some default terms to be able to walk its tree
-# then we can specify widgets to dislay its subjects in
-# 
-source:default ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
-:Administrators ui:descriptionList source:Administrators .
-:Editors ui:descriptionList source:Editors .
-:Creators ui:descriptionList source:Creators .
+:CodeMenu
+  a ui:Tabset ;
+  ui:orientation 1 ;
+  ui:backgroundColor "#6699ff" ;
+  ui:dataSource (
+    [ ui:label "demo.html" ; a ui:Preformat ; ui:dataSource &lt;demo.html> ] 
+    [ ui:label "ui.ttl" ; a ui:Link; ui:dataSource &lt;ui.ttl> ] 
+    [ ui:label "source.ttl" ; a ui:Link; ui:dataSource &lt;source.ttl> ] 
+  ) .
 </pre></p>
 """ .
 
