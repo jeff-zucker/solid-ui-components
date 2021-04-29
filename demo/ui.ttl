@@ -1,7 +1,6 @@
 @prefix : <#> .
 @prefix org: <https://www.w3.org/ns/org#> .
 @prefix skos: <http://www.w3.org/2008/05/skos#> .
-@prefix uix: <https://solid-uix.solidcommunity.net/ns#> .
 @prefix ui: <https://www.w3.org/ns/ui#> .
 @prefix source: <source.ttl#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
@@ -42,7 +41,7 @@ source: ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
 :Home
   a ui:Inline;
   ui:inlineContent """
-<h1>Solid-uix</h1>
+<h1>Solid-UI-Components</h1>
 <p>
 The basic idea : turn groups of things into widgets.  Groups can be people in a team, pages in a website, or anything which has a membership/containment relatationship and is stored as RDF. The widget can be a a set of tabs, a dropdown menu, a description list, or other UI component.  
 </p>
