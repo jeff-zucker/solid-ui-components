@@ -20,9 +20,9 @@
   ui:backgroundColor "#6699ff" ;
   a ui:Tabset;
   ui:dataSource (
-    [ ui:label "demo.html" ; a ui:Preformat; ui:dataSource <demo.html> ] 
-    [ ui:label "ui.ttl" ; a ui:Link; ui:dataSource <ui.ttl> ] 
-    [ ui:label "source.ttl" ; a ui:Link; ui:dataSource <source.ttl> ] 
+    [ ui:label "demo.html" ; a ui:Markdown; ui:dataSource <demo.html> ] 
+    [ ui:label "ui.ttl" ; a ui:Markdown; ui:dataSource <ui.ttl> ] 
+    [ ui:label "source.ttl" ; a ui:Markdown; ui:dataSource <source.ttl> ] 
   ) .
 
 # these are from another document using a different ontology
@@ -35,10 +35,12 @@ source: ui:memberTerm org:hasMember ; ui:labelTerm skos:prefLabel .
 :Creators a ui:DescriptionList; ui:dataSource source:Creators .
 
 
+:Home a ui:Markdown; ui:dataSource <home.md> .
+
 #-----------------------------------
 # an item displayed from inline HTML
 #-----------------------------------
-:Home
+:HomeZ
   a ui:Inline;
   ui:inlineContent """
 <h1>Solid-UI-Components</h1>

@@ -2,7 +2,7 @@
         div.ui-tabset {
             margin:1em;
             width:800px;
-            // height:700px;
+            min-height:700px;
         }
 /* inner tabset container */
         div.ui-tabset main main main {
@@ -11,6 +11,7 @@
         }
 /* tabset content area */
         div.ui-tabset main main {
+            height:600px !important;
             border:none !important;
         }
 /* main tabset tabs */

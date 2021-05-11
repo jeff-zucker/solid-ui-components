@@ -432,6 +432,12 @@ console.log(o.subject,o.form);
       content.style.overflow="auto";
       content.style.height="100%";
     }
+    else if( action==="Markdown" ) {
+      iframe.src = "../markdown/?q="+link;
+      containingElement.innerHTML = "";
+      containingElement.appendChild(iframe);
+      return;
+    }
     else if( action==="Preformat" ) {
       // let thing = kb.any(subject, ui('Preformat')) || {};
       // let r = await fetch(thing.value);

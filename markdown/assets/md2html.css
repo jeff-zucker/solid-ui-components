@@ -1,0 +1,8 @@
+/*
+uses local copies of :
+https://github.com/highlightjs/highlight.js/blob/main/src/styles/github.css
+https://github.com/KrauseFx/markdown-to-html-github-style/blob/master/style.css
+*/
+@import "hljs-github.css";
+@import "krause.css";
+

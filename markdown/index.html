@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!--
+  convert markdown to github-flavored HTML on the fly
+     markdown/?q=markdownFile
+  syntax-highlight a file on the fly
+     markdown/?q=anyFile&language=optionalLanguageSpecifier
+
+  (c) Jeff Zucker, 2021, MIT License, may be freely distributed
+  uses showdown.js and highlight.js
+  based on https://github.com/KrauseFx/markdown-to-html-github-style
+-->
+<html><head><meta charset="UTF-8" />
+  <title>Markdown Displayer</title>
+  <meta name="viewport" content="width=device-width">
+  <script src="./assets/showdown.min.js"></script>
+  <script src="./assets/highlight.min.js"></script>
+  <link rel="stylesheet" href="./assets/md2html.css" />
+</head><body>
+  <script type="module">
+    import {md2html} from './assets/md2html.js';
+    ( async()=>{
+      let url = new URL(window.location.href)
+      let mdFile = url.searchParams.get('q');
+      let raw = await fetch(mdFile);
+      raw = await raw.text();
+      if(!mdFile.endsWith('.md')){
+        let lang = url.searchParams.get('language') || "";
+        if(mdFile.endsWith('.ttl')) lang="turtle";
+        if(mdFile.endsWith('.js')) lang="javascript";
+        if(mdFile.endsWith('.json')) lang="json";
+        raw = "```" + lang + "\n" + raw + "\n```\n";
+      }
+      let converted = await md2html( raw );
+      document.body.appendChild(converted);
+    } )();
+  </script>
+</body></html>
+
+<!--
+# get content and transform it with a script
+#
+[] a ui:Transformation 
+  dataSource <dataURI> ; 
+  script <scriptURI> .
+
+[] a ui:Link; 
+  dataSource <scriptURI?source=dataURI> ; 
+-->

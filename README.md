@@ -30,14 +30,16 @@ is clicked, display a solid-ui form.
 
 These widgets are working in the current repo :
 
-   * ui:Form
-   * ui:Table
-   * ui:Tabset
-   * ui:DescriptionList
-   * ui:SelectorPanel
+   * ui:Form            // display any solid-ui interactive form
+   * ui:Table           // display data as an HTML table
+   * ui:Tabset          // display data as an interactve set of tabs
+   * ui:DescriptionList // display data as an HTML description list
+   * ui:Markdown        // display markdown text or file as HTML
+   * ui:Highlight       // display any text or file with syntax highlighting
 
 These are planned :
 
+   * ui:SelectorPanel
    * ui:Menu
    * ui:Tree
    * ui:Slideshow
