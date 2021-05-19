@@ -1,3 +1,7 @@
+import {tabset}  from './tabset.js';
+import {app}  from './app.js';
+import * as utils from './utils.js';
+
 ( ()=> {
 
   const kb = UI.store;
@@ -15,118 +19,161 @@
       let t = await tabs( widget, elm );
       elm.appendChild( t );
     }
+    for(let elm of document.getElementsByClassName('ui-app')){
+      let widget = await parseOptions( elm.dataset );
+      let t = await makeApp( widget, elm);
+//      let t = await makeApp( elm.dataset.source, kb );
+      //elm.appendChild( t );
+    }
     for(let elm of document.getElementsByClassName('ui-menu')){
       let widget = await parseOptions( elm.dataset );
       let m = await menu( widget, elm );
+  //    elm.appendChild( m );
+    }
+    for(let elm of document.getElementsByClassName('ui-banner')){
+      let widget = await parseOptions( elm.dataset );
+      let m = await banner( widget, elm );
       elm.appendChild( m );
     }
   }
 
-  async function menu(o){
-    console.log(o);
-  }
-
   async function parseOptions(o){
-    let w = {};
     let source = o.source;
     if(!source.startsWith('http')) {
       source = location.href.replace(/\/[^\/]*$/,'/') + source;
     }
 
     // subject, uri, doc()
-    w.subject = UI.rdf.namedNode(source);
+    let subject = UI.rdf.sym(source);
+    await utils.load( subject.uri,kb );
+
+    let w = await utils.getProperties(UI.rdf.namedNode(source),kb);
     w.uri = w.subject.doc().value;
     w.doc = UI.rdf.Namespace( w.uri + '#' );
 
-    w.store ||= kb
-    w.store = await load( w.uri );
 
-    w.sourceNode =  findWidgetSource(w.subject);
+//    w = getProperties(w.subject,w);
+
+    w.dataSource =  findWidgetDataSource(w.subject);
+    w.uiType = findUiType(w.subject);
 
     // membershipStyle 
     //   hasMember or memberOf
-    w.listType = w.store.any( w.subject, ui("inverse") );
+    w.listType = kb.any( w.subject, ui("inverse") );
     w.listType = w.listType ?"memberOf" :"hasMember";
 
-    // memberTerm
+    // memberTer
     w.memberTerm = getMemberTerm(w.subject)
 
     if(w.listType==="hasMember")  w.memberTerm ||= ui("parts");
     else  w.memberTerm ||= ui("partOf");
 
     // labelTerm
-    w.labelTerm = w.store.any( w.subject, ui("labelTerm") )
+    w.labelTerm = kb.any( w.subject, ui("labelTerm") )
     w.labelTerm ||= ui("label");
 
     // linkTerm
-    w.linkTerm = w.store.any( w.subject, ui("linkTerm") ) 
+    w.linkTerm = kb.any( w.subject, ui("linkTerm") ) 
     w.linkTerm ||= ui("target");
 
-    // orientation / selectedtab / backgroundcolor
-    w.orientation = getOrientation(w.subject);
-    w.selectedtab = getSelectedTab(w.subject);
-    w.backgroundcolor = getBackgroundColor(w.subject);
-
-    // items
-    if(w.sourceNode.termType==="Collection"){
-      w.items = w.sourceNode.elements || [];
-    }
-    else {
-      if(w.listType==="memberOf"){
-        w.items = w.store.each( undefined, w.memberTerm, w.subject );
-      }
-      else {
-        w.items = w.store.each( w.subject, w.memberTerm );
-      }
-    }
-
+    w.items = await getItems(w);
     if(!w.items || w.items.length===0) {
-      console.error("No items for " + w.subject);
+      console.log("No items for " + w.subject);
       return w;
     }
-    for(var i of w.items){
-       fixLink(i);
-    }
+//    w.items = populateItems(w.items);
     return w;
   }
 
-  function findWidgetType(subject){
-      let type = kb.match(subject,rdf('type')).filter(t=>{ 
-        return t.object.value.match(ui('').value)
-      })
-      type = type && type.length ? type[0].object.value : "";
-      return type.replace( ui('').value, '' );
+  async function getItems(w,populatedItems){
+    populatedItems ||= [];
+let x=0
+    if(w.dataSource.termType != "Collection")
+      await utils.load(w.dataSource,kb);
+    if(typeof w.dataSource==="string"){
+x=1
+// console.log(w.subject,w.dataSource);
+        w.dataSource = UI.rdf.sym(w.dataSource);
+        w.memberTerm = getMemberTerm(w.dataSource)
+        let ds  = kb.each(w.dataSource,w.memberTerm)
+        if(ds.length){
+          w.dataSource=ds[0];
+          w.memberTerm = getMemberTerm(w.dataSource)
+        }
     }
-  function getBackgroundColor( subject ){
-      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,ui('backgroundColor')) 
-              || kb.any( doc(''),ui('backgroundColor') )
-      return pred ? pred.value : null;
-  }
-  function getOrientation( subject ){
-      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,ui('orientation'),undefined) 
-              || kb.any( doc(''),ui('orientation') )
-      return pred ? pred.value : 0;
-  }
-  function getSelectedTab( subject ){
-      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,ui('selectedTab')) 
-              || kb.any( doc(''),ui('selectedTab') )
-      return pred ? pred.value : 0;
-  }
-  function fixLink( subject ){
-      let pred = kb.any(subject,ui('linkTerm')) || ui("target")
-      link = kb.any( subject,pred );
-      if(!link) {
-        kb.add( subject,pred,UI.rdf.namedNode('http://example.org/') );
+    if(w.dataSource.termType==="Collection"){
+      w.items = w.dataSource.elements || [];
+    }
+    else {
+      if(w.listType==="memberOf"){
+        w.items = kb.each( undefined, w.memberTerm, w.subject );
       }
+      else {
+        w.items = kb.each( w.subject, w.memberTerm );
+      }
+    }
+    for(var i of w.items){
+      let dSource = findWidgetDataSource(i);
+      dSource = typeof dSource==="string" ?UI.rdf.sym(dSource) :dSource;
+//      console.log(77,dSource);
+//      if(dSource.termType != "Collection")
+        await utils.load(dSource,kb);
+      let membTerm = getMemberTerm(dSource);
+      dSource = kb.each(dSource,membTerm)
+      let subItems = dSource && dSource[0] ? dSource[0].elements : [];
+      let sItems=false
+      if( subItems.length ){
+        sItems=[];
+        for(var s of subItems){
+          sItems.push( await populateItem(s,false) );
+        }
+      }
+      populatedItems.push(await populateItem(i,sItems))
+    }
+//  console.log(8,dSource[0].elements);
+// let membTerm = getMemberTerm(i.dSource);
+//console.log(9,i)
+//       let subItems = kb.each(i,w.memberTerm);
+//console.log(9,i.value,membTerm.value,subItems)
+/*       let sItems=false
+       if( subItems.length ){
+         sItems=[];
+         for(s of subItems){
+           sItems.push( getItems({dataSource:s},populatedItems));
+         }
+      }
+      populatedItems.push(await populateItem(i,sItems))
+    }
+    if(x) console.log(99,populatedItems);
+*/
+    return populatedItems;
   }
-  function getLabel( subject, parent ){
-      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
+
+  async function populateItem(item,subItems){
+    let label = await getLabel(item);
+    return {
+      uri : item.uri,
+      label : label,
+      subItems : subItems
+    }
+  }
+
+  function findUiType(subject){
+    let type = kb.match(subject,rdf('type')).filter(t=>{ 
+      return t.object.value.match(ui('').value)
+    })
+    type = type && type.length ? type[0].object.value : "";
+    return type.replace( ui('').value, '' );
+  }
+
+  async function getLabel( subject, parent ){
+      await utils.load(subject,kb);
+//      if(typeof subject.doc != "function") return;
+      let doc = UI.rdf.Namespace( subject.doc().uri );
       let pred = kb.any(subject,ui('labelTerm')) 
               || kb.any( doc(''),ui('labelTerm') )
               || kb.any(subject,ui('label'));
+//alert(subject+"  "+(pred ?pred.value : "",doc('')))
       return( pred ? pred.value : UI.utils.label(subject) );
   }
   function getLabelTerm( subject, parent ){
@@ -137,6 +184,7 @@
       return( pred ? pred : subject );
   }
   function getMemberTerm( subject ){
+      if(typeof subject.doc != "function") return;
       let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
       let pred = kb.any(subject,ui('memberTerm')) 
               || kb.any( doc(''),ui('memberTerm') )
@@ -154,7 +202,7 @@
      let button = document.createElement('BUTTON');
      let div =  document.createElement('DIV');
      let table =  document.createElement('DIV');
-     button.innerText = getLabel(o.subject,ui('label'));
+     button.innerText = await getLabel(o.subject,ui('label'));
      button.addEventListener('click', async(event)=> {
        let content = await selectorPanel(o,containingElement);
        table.appendChild(content)
@@ -164,153 +212,35 @@
      return div;
   }
 
-  async function selectorPanel( options,containingElement ) {
-    const box = document.createElement('TABLE');
-    const callback= (label,link,options,event)=>{
-      event.preventDefault()
-      let clickedElement = event.target || event.srcElement;
-      let targetElement = options.targetElement || clickedElement.closest('TABLE').parentElement;
-      renderLink(link,options,UI.rdf.namedNode(link),targetElement)
-    };
-    for(let i in options.items){
-       let o = options.items[i];
-       let label = options.store.any( o, options.labelTerm );
-       let link  = options.store.any( o, options.linkTerm );
-       label = label ? label.value : "?";
-       link = link ? link.value : "?";
-       let row = document.createElement('DIV');
-       row.style.padding="0.5em";
-       row.style.cursor="pointer";
-       row.style.border = "0.1em solid #ddd";
-//       if(i != options.items.length-1)
-//         row.style.borderBottom = "none";
-       let text = document.createTextNode(label);
-       let td = document.createElement('TD');
-       let tr = document.createElement('TR');
-       row.appendChild(text);
-       row.addEventListener('click', function (event) {
-         callback(label,link,options,event);
-       });
-       td.appendChild(row);
-       tr.appendChild(td)
-       box.style.width="auto";
-       box.appendChild(tr);
-    }
-    // console.log(box);
-    return box;
-  }
-
-  async function tabs(o,containingElement) {
-    const backgroundcolor = o.backgroundcolor || undefined;
-    let orientation = o.orientation || 0;
-    let selected = o.selectedtab || 1;
-    selected = selected -1;
-    if(selected<0) selected = 0;
-    if(selected>o.items.length) selected = 0;
-
-    // Add in extra tabs
-    let xtras=o.store.each(o.subject,ui('additionalTabs'))
-    if( xtras && xtras[0] ){
-      xtras = xtras[0].elements; // get items from Collection
-      for(x of xtras.reverse() ){
-        o.items.unshift(x);
-      }
-    }
-
-    for(var i of o.items){
-       fixLink(i);
-    }
-
-    // the call to Solid-UI
-    let tabset = {
-      render: async () => UI.tabs.tabWidget({
-        orientation: orientation,
-        backgroundColor : backgroundcolor,
-        subject : o.subject,
-        predicate : o.memberTerm,
-        items : o.items,
-        renderTab: async (tabDiv,tabSubject)=>{
-          tabDiv.dataset.name = tabSubject.uri;
-          let label = o.store.any( tabSubject, o.labelTerm );
-          if(label) {
-            tabDiv.innerText = label.value;
-          }
-          else {
-            tabDiv.innerText = tabSubject.uri.replace(/.*#/,'');
-          }
-        },
-        renderMain: async (bodyMain, subject) => {
-          let link = o.store.any( subject, o.linkTerm ).value;
-          await renderLink( link, o, subject, bodyMain )
-        },
-        selectedTab : selected ? o.items[selected].uri : 0
-      })
-    };
-    tabsetDOM = await tabset.render();
-    tabsetDOM.classList.add("ui-tabset-container");
-    // post-process the tabset dom we got from Solid-UI
-
-    // main[0] underlies the mains of each tab 
-    let main = tabsetDOM.querySelectorAll('MAIN')[0];
-    main.style.backgroundColor="white";
-    main.style.overflow="hidden";
-
-    // Force refresh of first tab
-/*
-    let tabsList = tabsetDOM.querySelectorAll('NAV UL LI DIV');
-    tabsList[0].addEventListener('click', async (event) => {
-      let subject = o.items[0]
-      let clickedElement = event.target || event.srcElement;
-      let targetElement = tabsetDOM.querySelectorAll('MAIN')[1];
-      let link = o.store.any( subject, o.linkTerm );
-      await renderLink( link.uri, o, link, targetElement )
-    });
-*/
-    return(tabsetDOM);
-  }
-
-  function simulateClick(el){
-    if (el.fireEvent) {
-      el.fireEvent('on' + 'click');
-    } else {
-      var evObj = document.createEvent('Events');
-      evObj.initEvent('click', true, false);
-      el.dispatchEvent(evObj);
-    }
-  }
-
-  async function loadFromContent( body, uri ){
-    let store = UI.rdf.graph();
-    UI.rdf.parse(  body, store, uri, "text/turtle")     
-    return store;
-  }
-  async function load( uri ){
-    uri = UI.rdf.namedNode(uri)
-    let alreadyLoaded =  kb.any( undefined,undefined,undefined,uri.doc()); 
-    if( !alreadyLoaded ){
-      let fetcher = UI.rdf.fetcher( kb ); // only load if not yet loaded
-      await fetcher.load( uri );
-    }
-    return kb;
-  }
-
-  function descriptionList(subject,{},o){
+  async function descriptionList(subject,{},o){
      let doc = UI.rdf.Namespace(subject.doc().uri+"#");
      let listName = kb.any(subject,getLabelTerm(subject));
      let members = kb.each(subject,getMemberTerm(subject));
      let div = document.createElement('DIV');
      let listTemplate = "";
+/*
+`
+<div>
+  <h1>${listName}</h1>
+  <dl>
+    <dt>${listProperties}</dt>
+</div>
+`
+*/
      if(listName){
        listTemplate = `<h1>${listName}</h1>`;
        let h1 = document.createElement('H1');
        h1.innerText = listName.value;
        h1.style.marginBottom="0";
        h1.style.paddingBottom="0";
+       h1.style.fontSize="1.6rem";
+       h1.style.fontWeight="550";
        div.appendChild(h1);
      }
      let dl = document.createElement('DL');
      let d = document.createElement('DT');
-     d = _props2dd(d,subject);
+     d = await _props2dd(d,subject);
+     d.style.maxWidth="640px";
      dl.appendChild(d);
      for(var i of members){
        let dt = document.createElement('DT');
@@ -318,23 +248,23 @@
        let h2 = document.createElement('b');
        h2.innerText = memberName.value;
        dt.appendChild(h2);
-       dt = _props2dd(dt,i,subject);
+       dt = await _props2dd(dt,i,subject);
        dt.style.marginLeft="1em";
        dt.style.marginTop="1em";
        dl.appendChild(dt);
      }
      div.appendChild(dl);
+     div.style.paddingLeft="1rem";
      return div;
   }
 
-  function _props2dd(dt,subject,parent){
+  async function _props2dd(dt,subject,parent){
     let props = kb.match(subject)
     for(var p of props){
       let memberPred = getMemberPred(subject,parent);
-      let labelPred = getLabel(subject,parent);
-      if( labelPred && p.predicate.value.match(labelPred) ) continue;
+      let labelPred = await getLabelTerm(subject,parent);
+      if( labelPred && p.predicate.value.match(labelPred.value) ) continue;
       if( memberPred && p.predicate.value.match(memberPred)  ) continue;
-//      if( p.predicate.value.match(uix('').value)  ) continue;
       if( p.predicate.value.match(ui('').value)  ) continue;
       let dd = document.createElement('DD');
       let i = document.createElement('I');
@@ -348,25 +278,9 @@
     }
     return(dt)
   }
-
-  function makeIframe(){
-    let iframe = document.createElement('IFRAME');
-    iframe.width="100%";
-    iframe.height="100%";
-    iframe.style.border="none";
-    iframe.sandbox = 'allow-forms allow-scripts allow-same-origin allow-modals allow-popups';
-    return iframe;
-  }
-  async function fillIframe( iframe, content, type ){
-    type ||= "text/html";
-    const blobObj = await new Blob( [content], {type:type} ) ;
-    iframe.src = URL.createObjectURL( blobObj );
-    return iframe
-  }
-
   function findAction( subject ){
     let actions = (
-       "inline preformat descriptionList selectorPanel tabSet"
+       "inline preformat descriptionList selectorPanel tabSet app menu"
     ).split(/ /);
     for(var a of actions){
       if( kb.any( subject, ui(a) ) ) { return a; }
@@ -382,17 +296,84 @@
     return link;
   }
 
-  function findWidgetSource (subject){
+  function findWidgetDataSource (subject){
     let sourceNode =  kb.any(subject,ui('dataSource')) || {};
     if(!sourceNode.termType) return sourceNode;
     if(sourceNode.termType==="Collection")
       return sourceNode
     if(sourceNode.termType==="BlankNode") {
       sourceNode =  kb.any(subject,ui('dataSource'))
-      console.log(44,sourceNode);
     }
     if(sourceNode.termType==="NamedNode") {
       return sourceNode.value;
+    }
+  }
+
+  async function tabs(o,containingElement){
+    if(typeof tabset === "function") {
+      let tabDom = await tabset(o,containingElement) ;
+      let links = tabDom.querySelectorAll('LI A');
+      let ind=-1;
+      for(var l of links){
+        ind++;
+        let subject = UI.rdf.sym(l.dataset.name);
+        l.addEventListener('click',e=>{
+           let ancestor = e.target.parentNode.parentNode.parentNode.parentNode;
+           let containingElement = ancestor.querySelector('MAIN');
+           for(var lin of links){
+             lin.style.backgroundColor = o.altBackgroundColor;
+             let subItems = lin.parentNode.querySelector('UL');
+             if(subItems){
+               subItems.style.display="none";
+             }
+           }
+           e.target.style.backgroundColor = o.backgroundColor;
+           let subItems = e.target.parentNode.querySelector('UL');
+           if(subItems){
+             subItems.style.display="block";
+             utils.simulateClick(subItems.querySelectorAll('LI SPAN')[0]);
+           }
+           else {
+            renderLink( {},subject,containingElement);
+           }
+        });
+        let subLinks = l.parentNode.querySelectorAll('UL LI SPAN') || [];
+        let dup = subLinks;
+        for(var l2 of subLinks){
+          l2.style.fontWeight="600";
+          l2.addEventListener('click',e=>{
+            for(var l3 of dup){
+               l3.style.fontWeight="600";
+               l3.style.color=o.altBackgroundColor;
+            }
+            e.target.style.color=o.backgroundColor;
+            let subject = UI.rdf.sym(e.target.dataset.name);
+            let anc = e.target.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+            let containingE = anc.querySelector('MAIN');
+            renderLink( {},subject,containingE);
+            
+return;
+             let ancestor = e.target.parentNode.parentNode.parentNode.parentNode;
+             let containingElement = ancestor.querySelector('MAIN');
+             for(var lin of links){
+               lin.style.backgroundColor = o.altBackgroundColor;
+               let subItems = lin.parentNode.querySelector('UL');
+               if(subItems){
+                 subItems.style.display="none";
+               }
+             }
+             e.target.style.backgroundColor = o.backgroundColor;
+          })
+        }
+        if(ind.toString()==o.selected){
+            l.style.backgroundColor =  o.backgroundColor;
+        }
+        else {
+          l.style.backgroundColor = o.altBackgroundColor;
+        }
+      }
+      utils.simulateClick(links[o.selected]);
+      return tabDom;
     }
   }
 
@@ -401,19 +382,25 @@
     const container = o.container || document.createElement("div");
     const doc = o.document || o.subject.doc();
     const dom = o.dom || window.document;
-    await UI.store.fetcher.load(o.form);
-    await UI.store.fetcher.load(o.subject);
-console.log(o.subject,o.form);
+    await UI.store.fetcher.utils.load(o.form,kb);
+    await UI.store.fetcher.utils.load(o.subject,kb);
     UI.widgets.appendForm(dom, container, already, o.subject, o.form, doc);
     return container;
   }
 
-  async function renderLink ( url, options, subject, containingElement ){
-    let action = findWidgetType(subject) || "showWebPage";
-    let link = findWidgetSource(subject);
-    let iframe = makeIframe();
-    let content;
+  async function makeApp(o,containingElement){
+    let appDom = await app(o,containingElement,kb) ;
+//    let appDom = await app(source,kb) ;
+    let displayArea = (appDom.getElementsByTagName('main'))[0];
+    renderLink(o,o.dataSource,displayArea);
+  }
 
+  async function renderLink ( options, subject, containingElement ){
+    if(typeof subject==="string") subject = UI.rdf.sym(subject);
+    let action = findUiType(subject) || "showWebPage";
+    let link = findWidgetDataSource(subject);
+    let iframe = utils.makeIframe();
+    let content;
     if(action==="FormDefinition"){
        content = await form({
          form :  kb.any(subject,ui('form')),
@@ -449,7 +436,7 @@ console.log(o.subject,o.form);
     }
     else if( action==="Tabset" ) {
       let w = await parseOptions({source:subject.uri});
-      content = await tabs( w );
+      content = await tabs(w,containingElement) ;
     }
     else if( action==="DescriptionList" ) {
       link = UI.rdf.namedNode(link);
