@@ -1,4 +1,6 @@
-export async function tabset(o,containingElement) {
+import * as utils from './utils.js';
+
+export async function tabset(o,containingElement,kb) {
   o.orientation ||= 0;
   o.selected ||= 1;
   o.selected = o.selected -1;
@@ -15,12 +17,14 @@ width:12rem;
         `
       : `<li><a style="display:inline-block; border-radius: 0.2em 0.2em 0 0;
         padding: 0.7em; cursor:pointer; margin: 0.3em 0 0.3em 0.3em;
-        color:${o.color}; background-color:${o.altBackgroundColor}" 
+        color:${o.color}; background-color:${o.altBackgroundColor};" 
         `
   for(var i of o.items){
+    let caret =  i.subItemsXX ?`<img style="height:1em;width:1em;margin-right:1em" class="downward-caret" src="caret.png" .>` :"";
     items +=  itemTemplate + `
         data-name='${i.uri}'
         >
+          <span style="display:inline-block;">${caret}</span>
           ${i.label}
         </a>
     `;

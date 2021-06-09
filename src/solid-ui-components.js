@@ -1,12 +1,14 @@
 import {tabset}  from './tabset.js';
 import {app}  from './app.js';
 import * as utils from './utils.js';
+import * as dsutils from './datasource.js';
 
 ( ()=> {
 
   const kb = UI.store;
   const rdf = UI.rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
   const ui = UI.rdf.Namespace('https://www.w3.org/ns/ui#');
+  const foaf = UI.rdf.Namespace("http://xmlns.com/foaf/0.1/");
 
   async function init(){
     for(let elm of document.getElementsByClassName('ui-selectorPanel')){
@@ -54,19 +56,15 @@ import * as utils from './utils.js';
 
 //    w = getProperties(w.subject,w);
 
-    w.dataSource =  findWidgetDataSource(w.subject);
     w.uiType = findUiType(w.subject);
 
-    // membershipStyle 
-    //   hasMember or memberOf
-    w.listType = kb.any( w.subject, ui("inverse") );
-    w.listType = w.listType ?"memberOf" :"hasMember";
+// w.inverse = kb.any( w.subject, ui("inverse") );
+w.inverse = dsutils.getInverseValue(subject,kb);
 
-    // memberTer
-    w.memberTerm = getMemberTerm(w.subject)
-
-    if(w.listType==="hasMember")  w.memberTerm ||= ui("parts");
-    else  w.memberTerm ||= ui("partOf");
+    // memberTerm
+    w.memberTerm = dsutils.getMemberTerm(w.subject,kb)
+//    if(w.listType==="hasMember")  w.memberTerm ||= ui("parts");
+//    else  w.memberTerm ||= ui("partOf");
 
     // labelTerm
     w.labelTerm = kb.any( w.subject, ui("labelTerm") )
@@ -76,86 +74,9 @@ import * as utils from './utils.js';
     w.linkTerm = kb.any( w.subject, ui("linkTerm") ) 
     w.linkTerm ||= ui("target");
 
-    w.items = await getItems(w);
-    if(!w.items || w.items.length===0) {
-      console.log("No items for " + w.subject);
-      return w;
-    }
-//    w.items = populateItems(w.items);
+    w.dataSource =  await dsutils.getDataSource(w.subject,kb);
+    w.items = await dsutils.getItems(w,[],kb) || [];
     return w;
-  }
-
-  async function getItems(w,populatedItems){
-    populatedItems ||= [];
-let x=0
-    if(w.dataSource.termType != "Collection")
-      await utils.load(w.dataSource,kb);
-    if(typeof w.dataSource==="string"){
-x=1
-// console.log(w.subject,w.dataSource);
-        w.dataSource = UI.rdf.sym(w.dataSource);
-        w.memberTerm = getMemberTerm(w.dataSource)
-        let ds  = kb.each(w.dataSource,w.memberTerm)
-        if(ds.length){
-          w.dataSource=ds[0];
-          w.memberTerm = getMemberTerm(w.dataSource)
-        }
-    }
-    if(w.dataSource.termType==="Collection"){
-      w.items = w.dataSource.elements || [];
-    }
-    else {
-      if(w.listType==="memberOf"){
-        w.items = kb.each( undefined, w.memberTerm, w.subject );
-      }
-      else {
-        w.items = kb.each( w.subject, w.memberTerm );
-      }
-    }
-    for(var i of w.items){
-      let dSource = findWidgetDataSource(i);
-      dSource = typeof dSource==="string" ?UI.rdf.sym(dSource) :dSource;
-//      console.log(77,dSource);
-//      if(dSource.termType != "Collection")
-        await utils.load(dSource,kb);
-      let membTerm = getMemberTerm(dSource);
-      dSource = kb.each(dSource,membTerm)
-      let subItems = dSource && dSource[0] ? dSource[0].elements : [];
-      let sItems=false
-      if( subItems.length ){
-        sItems=[];
-        for(var s of subItems){
-          sItems.push( await populateItem(s,false) );
-        }
-      }
-      populatedItems.push(await populateItem(i,sItems))
-    }
-//  console.log(8,dSource[0].elements);
-// let membTerm = getMemberTerm(i.dSource);
-//console.log(9,i)
-//       let subItems = kb.each(i,w.memberTerm);
-//console.log(9,i.value,membTerm.value,subItems)
-/*       let sItems=false
-       if( subItems.length ){
-         sItems=[];
-         for(s of subItems){
-           sItems.push( getItems({dataSource:s},populatedItems));
-         }
-      }
-      populatedItems.push(await populateItem(i,sItems))
-    }
-    if(x) console.log(99,populatedItems);
-*/
-    return populatedItems;
-  }
-
-  async function populateItem(item,subItems){
-    let label = await getLabel(item);
-    return {
-      uri : item.uri,
-      label : label,
-      subItems : subItems
-    }
   }
 
   function findUiType(subject){
@@ -163,33 +84,20 @@ x=1
       return t.object.value.match(ui('').value)
     })
     type = type && type.length ? type[0].object.value : "";
-    return type.replace( ui('').value, '' );
+    type = type.replace( ui('').value, '' );
+    if(!type){
+      let classLabels = kb.match( null, ui('displayType'), null, null);
+      for(var c of classLabels){
+        let x = kb.match(subject,rdf('type'),c.subject );
+        if(x) {
+          x = c.object.value.replace( ui('').value, '' );
+         return x
+        }
+      }
+    }
+    return type
   }
 
-  async function getLabel( subject, parent ){
-      await utils.load(subject,kb);
-//      if(typeof subject.doc != "function") return;
-      let doc = UI.rdf.Namespace( subject.doc().uri );
-      let pred = kb.any(subject,ui('labelTerm')) 
-              || kb.any( doc(''),ui('labelTerm') )
-              || kb.any(subject,ui('label'));
-//alert(subject+"  "+(pred ?pred.value : "",doc('')))
-      return( pred ? pred.value : UI.utils.label(subject) );
-  }
-  function getLabelTerm( subject, parent ){
-      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,ui('labelTerm')) 
-              || kb.any( doc(''),ui('labelTerm') )
-              || kb.any(subject,ui('label'))
-      return( pred ? pred : subject );
-  }
-  function getMemberTerm( subject ){
-      if(typeof subject.doc != "function") return;
-      let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
-      let pred = kb.any(subject,ui('memberTerm')) 
-              || kb.any( doc(''),ui('memberTerm') )
-      return( pred ? pred : ui("parts") );
-  }
   function getMemberPred( subject ){
       let doc = UI.rdf.Namespace( subject.doc().uri + "#" );
       let pred = kb.any(subject,ui('memberTerm')) 
@@ -202,7 +110,7 @@ x=1
      let button = document.createElement('BUTTON');
      let div =  document.createElement('DIV');
      let table =  document.createElement('DIV');
-     button.innerText = await getLabel(o.subject,ui('label'));
+     button.innerText = await dsutils.getLabel(o.subject,kb);
      button.addEventListener('click', async(event)=> {
        let content = await selectorPanel(o,containingElement);
        table.appendChild(content)
@@ -213,9 +121,10 @@ x=1
   }
 
   async function descriptionList(subject,{},o){
-     let doc = UI.rdf.Namespace(subject.doc().uri+"#");
-     let listName = kb.any(subject,getLabelTerm(subject));
-     let members = kb.each(subject,getMemberTerm(subject));
+     let listName =  dsutils.getLabel(subject,kb);
+     let members = o.inverse
+        ?kb.each(null,dsutils.getMemberTerm(subject,kb),subject)
+        :kb.each(subject,dsutils.getMemberTerm(subject,kb));
      let div = document.createElement('DIV');
      let listTemplate = "";
 /*
@@ -230,7 +139,7 @@ x=1
      if(listName){
        listTemplate = `<h1>${listName}</h1>`;
        let h1 = document.createElement('H1');
-       h1.innerText = listName.value;
+       h1.innerText = listName;
        h1.style.marginBottom="0";
        h1.style.paddingBottom="0";
        h1.style.fontSize="1.6rem";
@@ -244,7 +153,11 @@ x=1
      dl.appendChild(d);
      for(var i of members){
        let dt = document.createElement('DT');
-       let memberName = kb.any( i, getLabelTerm(i) ) || {};
+       let memberName = kb.any( i, dsutils.getLabelTerm(i,kb) ) || {};
+       dt = await getItemProperties(i,dt);
+       dl.appendChild(dt);
+       continue;
+/*
        let h2 = document.createElement('b');
        h2.innerText = memberName.value;
        dt.appendChild(h2);
@@ -252,26 +165,83 @@ x=1
        dt.style.marginLeft="1em";
        dt.style.marginTop="1em";
        dl.appendChild(dt);
+*/
      }
      div.appendChild(dl);
-     div.style.paddingLeft="1rem";
+     div.style.paddingLeft="1em";
      return div;
   }
 
+  function isAperson(thing){
+    return kb.any(thing,rdf('type'),foaf('Person')).length;
+  }
+
+  function  getItemProps(subject){
+    let itemProps = "";
+    let props = kb.match(subject)
+    for(var p of props){
+      itemProps+=
+        `${UI.utils.label(p.predicate).toLowerCase()} - ${p.object.value}<br>`;
+
+    }
+    return(itemProps)
+  }
+
+  function showPerson(p){
+    let all=`<div style="font-size:1.3em;font-weight:bold;margin-top:1em">${p.label}</div>`;
+    if(p.image)all+=`
+    <table><tr>
+     <td><img style="max-width:100px;height:100px;margin-right:1em;" src="${p.image}" /></td>
+      <td>${p.props}</div>
+    </tr>
+    </table>`
+   else all += `<div style="margin-left:2em;">${p.props}</div><hr>`
+   return all;
+  }
+  async function getItemProperties(subject,dt){
+    let dd = document.createElement('DD');
+    let  label = kb.any(subject, dsutils.getLabelTerm(subject,kb) );
+    let  image = kb.any(subject, foaf('thumbnail') );
+    label = label ?label.value : "?";
+    image = image ?image.value : "";
+    let itemProps = kb.match(subject)
+    let props = "";
+    for(var p of itemProps){
+      let labelPred = await dsutils.getLabelTerm(subject,kb);
+      let linkPred = foaf("homepage"); // TBD generalze linkPred
+      let imagePred = foaf("thumbnail"); // TBD generalze linkPred
+      if( labelPred && p.predicate.value.match(labelPred.value) ) continue;
+      if( imagePred && p.predicate.value.match(imagePred.value)  ) continue;
+      if( p.predicate.value.match(rdf('type').value)  ) continue;
+      if( p.predicate.value.match(ui('').value)  ) continue;
+      props +=
+        `${UI.utils.label(p.predicate).toLowerCase()} - ${UI.utils.label(p.object)}<br>`;
+
+    }
+    dd.innerHTML = showPerson({ label, image, props })
+    dt.appendChild(dd);
+    return(dt);
+  }
   async function _props2dd(dt,subject,parent){
     let props = kb.match(subject)
     for(var p of props){
-      let memberPred = getMemberPred(subject,parent);
-      let labelPred = await getLabelTerm(subject,parent);
+      let memberPred = dsutils.getMemberTerm(subject,kb);
+      let labelPred = await dsutils.getLabelTerm(subject,kb);
+      let linkPred = foaf("homepage"); // TBD generalze linkPred
       if( labelPred && p.predicate.value.match(labelPred.value) ) continue;
-      if( memberPred && p.predicate.value.match(memberPred)  ) continue;
+      if( memberPred && p.predicate.value.match(memberPred.value)  ) continue;
       if( p.predicate.value.match(ui('').value)  ) continue;
       let dd = document.createElement('DD');
       let i = document.createElement('I');
       i.innerText =  ( UI.utils.label(p.predicate)+" - " ).toLowerCase();
       let s = document.createElement('SPAN');
       s.appendChild( i );
-      s.appendChild( document.createTextNode(UI.utils.label(p.object)));
+      if( linkPred && p.predicate.value.match(linkPred) ) {
+        s.innerHTML += `<a href="${p.object.value}" target="_BLANK">${p.object.value}</a>`;
+      }
+      else {
+        s.appendChild( document.createTextNode(UI.utils.label(p.object)));
+      }
       dd.appendChild(s);
       dd.style.marginLeft="1em";
       dt.appendChild(dd);
@@ -296,22 +266,9 @@ x=1
     return link;
   }
 
-  function findWidgetDataSource (subject){
-    let sourceNode =  kb.any(subject,ui('dataSource')) || {};
-    if(!sourceNode.termType) return sourceNode;
-    if(sourceNode.termType==="Collection")
-      return sourceNode
-    if(sourceNode.termType==="BlankNode") {
-      sourceNode =  kb.any(subject,ui('dataSource'))
-    }
-    if(sourceNode.termType==="NamedNode") {
-      return sourceNode.value;
-    }
-  }
-
   async function tabs(o,containingElement){
     if(typeof tabset === "function") {
-      let tabDom = await tabset(o,containingElement) ;
+      let tabDom = await tabset(o,containingElement,kb) ;
       let links = tabDom.querySelectorAll('LI A');
       let ind=-1;
       for(var l of links){
@@ -331,7 +288,13 @@ x=1
            let subItems = e.target.parentNode.querySelector('UL');
            if(subItems){
              subItems.style.display="block";
-             utils.simulateClick(subItems.querySelectorAll('LI SPAN')[0]);
+             let startPage = kb.any(subject,ui('startPage'));
+             if(startPage){
+               renderLink( {},startPage,containingElement);
+             }
+             else {
+               utils.simulateClick(subItems.querySelectorAll('LI SPAN')[0]);
+             }
            }
            else {
             renderLink( {},subject,containingElement);
@@ -388,17 +351,19 @@ return;
     return container;
   }
 
-  async function makeApp(o,containingElement){
+  async function makeApp(o,containingElement,kb){
+    if(o.banner) o.banner = await parseOptions({source:o.banner})
+    if(o.footer) o.footer = await parseOptions({source:o.footer})
     let appDom = await app(o,containingElement,kb) ;
-//    let appDom = await app(source,kb) ;
     let displayArea = (appDom.getElementsByTagName('main'))[0];
     renderLink(o,o.dataSource,displayArea);
   }
 
   async function renderLink ( options, subject, containingElement ){
     if(typeof subject==="string") subject = UI.rdf.sym(subject);
-    let action = findUiType(subject) || "showWebPage";
-    let link = findWidgetDataSource(subject);
+    let action = findUiType(subject);
+    let link = (await dsutils.getDataSource(subject,kb));
+    link = link ? link.value :null;
     let iframe = utils.makeIframe();
     let content;
     if(action==="FormDefinition"){
@@ -420,10 +385,16 @@ return;
       content.style.height="100%";
     }
     else if( action==="Markdown" ) {
-      iframe.src = "../markdown/?q="+link;
-      containingElement.innerHTML = "";
-      containingElement.appendChild(iframe);
-      return;
+      if(link) {
+        iframe.src = "../markdown/?q="+link;
+        containingElement.innerHTML = "";
+        containingElement.appendChild(iframe);
+        return;
+      }
+      else {
+        let content = kb.any(subject,ui('content'));
+        // TBD - display inline markdown content
+      }
     }
     else if( action==="Preformat" ) {
       // let thing = kb.any(subject, ui('Preformat')) || {};
@@ -439,6 +410,7 @@ return;
       content = await tabs(w,containingElement) ;
     }
     else if( action==="DescriptionList" ) {
+      link ||= subject;
       link = UI.rdf.namedNode(link);
       let w = await parseOptions({source:link.uri,store:kb});
       let b = await descriptionList( link,kb,w );
@@ -461,10 +433,22 @@ return;
       content = content.innerHTML;
       content.style.overflow="auto";
     }
-    else if(action==="Link" || action==="showWebPage") {
-      iframe.src = link;
-      containingElement.innerHTML = "";
-      containingElement.appendChild(iframe);
+    else if(action==="Link") {
+      if(!link){
+        content = document.createElement('DIV');
+        content.style.padding = "1em";
+        content.innerText = `Could not find ${subject.uri}`;
+      }
+      else {
+        iframe.src = link;
+        containingElement.innerHTML = "";
+        containingElement.appendChild(iframe);
+      }
+    }
+    else {
+        content = document.createElement('DIV');
+        content.style.padding = "1em";
+        content.innerText = `Could not find ${subject.uri}`;
     }
     if(content){
       content.style.height="100%";

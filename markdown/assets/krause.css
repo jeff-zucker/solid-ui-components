@@ -1,4 +1,7 @@
+p { margin-right:2em; }
+
 body {
+margin-top:0; padding-top:0;
   padding-left:1em;
   font: 400 18px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #111;
@@ -177,9 +180,6 @@ h1, h2, h3 {
   // border-bottom: 1px solid #eaecef;
   color: #111;
   font-weight:520;
+margin-top:0;
   /* Darker */ }
 
-p {
-  max-width:640px;
-  
-}

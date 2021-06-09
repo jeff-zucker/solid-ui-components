@@ -8,12 +8,12 @@ const rdf = UI.rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
         let prop = UI.utils.label( pr.predicate.value.replace(/.*\/ui#/,'') );
         p[prop]=UI.utils.label(pr.object.value)
      }     
-     p.contentBackgroundColor ||= _thingOrDefault(subject,'contentBackgroundColor',kb);
-     p.contentColor ||= _thingOrDefault(subject,'contentColor',kb);
-     p.backgroundColor ||= _thingOrDefault(subject,'backgroundColor',kb);
-     p.color ||= _thingOrDefault(subject,'color',kb);
-     p.altBackgroundColor ||= _thingOrDefault(subject,'altBackgroundColor',kb);
-     p.altColor ||= _thingOrDefault(subject,'altColor',kb);
+     p.contentBackgroundColor ||= thingOrDefault(subject,'contentBackgroundColor',kb);
+     p.contentColor ||= thingOrDefault(subject,'contentColor',kb);
+     p.backgroundColor ||= thingOrDefault(subject,'backgroundColor',kb);
+     p.color ||= thingOrDefault(subject,'color',kb);
+     p.altBackgroundColor ||= thingOrDefault(subject,'altBackgroundColor',kb);
+     p.altColor ||= thingOrDefault(subject,'altColor',kb);
      return p;
   }
   export function simulateClick(el){
@@ -52,22 +52,32 @@ const rdf = UI.rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
     return iframe;
   }
 
-  function _thingOrDefault( subject,key,kb ){
-/*
+  export function thingOrDefault( subject,key,kb ){
     let thing = kb.any( subject, ui(key) );
     if( thing )
       return thing.value;
     else
       return getAppDefault(key,kb)
-*/
+/*
       let doc = UI.rdf.Namespace( subject.doc().uri );
       let pred = kb.any( doc(''),ui(key) )
       return pred ? pred.value : null;
-
+*/
   }
   export function getAppDefault(key,kb){
     let app = kb.any( null, rdf('type'), ui('App') );
     if(!app) return null;
     let value = kb.any( app, ui(key), null );
     value = value ?value.value :null;
+    return value;
+  }
+  export function getAppDefaults(o,kb){
+    let app = kb.any( null, rdf('type'), ui('App') );
+    if(!app) return o;
+    let props = kb.match( app );
+    for(var p of props){
+      let key = p.predicate.value.replace(ui('').value,'');
+      if(!o[key]) o[key] = p.object.value
+    }
+    return o;
   }
