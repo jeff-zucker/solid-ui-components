@@ -1,76 +1,42 @@
-import * as utils from './utils.js';
 
-export async function tabset(o,containingElement,kb) {
-  o.orientation ||= 0;
-  o.selected ||= 1;
-  o.selected = o.selected -1;
-  if(o.selected<0) o.selected = 0;
-  if(o.selected>o.items.length) o.selected = 0;
-  o.backgroundColor ||= "#666";
-  o.color ||= "#fff";
-  let items = "";
-  let itemTemplate = o.orientation==1
-      ? `<li><a style="display:block;
-        padding: 0.4rem; cursor:pointer; margin: 0.3em 0 0.3em 0.3em;
-width:12rem;
-        color:${o.color}; background-color:${o.altBackgroundColor}" 
-        `
-      : `<li><a style="display:inline-block; border-radius: 0.2em 0.2em 0 0;
-        padding: 0.7em; cursor:pointer; margin: 0.3em 0 0.3em 0.3em;
-        color:${o.color}; background-color:${o.altBackgroundColor};" 
-        `
-  for(var i of o.items){
-    let caret =  i.subItemsXX ?`<img style="height:1em;width:1em;margin-right:1em" class="downward-caret" src="caret.png" .>` :"";
-    items +=  itemTemplate + `
-        data-name='${i.uri}'
-        >
-          <span style="display:inline-block;">${caret}</span>
-          ${i.label}
-        </a>
-    `;
-    if( i.subItems ) {
-      items += `<ul style="margin-top:-0.3em;display:none">`
-      for(var s of i.subItems){
-        items += `<li><span style="display:block; padding: 0.3em; cursor:pointer; margin-left:0.3em; color:${o.altBackgroundColor}; background-color:${o.color};" data-name="${s.uri}">${s.label}</span></li> 
-        `
-      }
-        items += "</ul>"
+async function tabset(results) {
+  let container=solidUI.createElement('DIV','uic-accordion','',"display:flex; height:100%; width:100%; flex-direction:row;")
+  let nav = solidUI.createElement('NAV','','',"margin:0;");
+  let ul = solidUI.createElement('UL','','','list-style-type:none;display:flex;height:100%;margin:0;padding:0;flex-direction:column;width:26vw')
+
+  const topics = {};
+  for(let row of results) {
+    if(!topics[row.topic]) {
+      topics[row.topic]={submenu:[]};
     }
-    items +=  "</li>"
+    topics[row.topic].submenu.push(row);
+  }  
+  let i=0;
+  for(let topic of Object.keys(topics)){
+    let li = solidUI.createElement('LI','','','margin-bottom:1rem;');
+    let button = solidUI.createElement('BUTTON','',topic,'padding:1rem;border-radius:0;border:1px solid #6d8ecb; width:100%;font-weight:bold;cursor:pointer;background: #6d8ecb;');
+    button.onclick = (event)=>{toggleAccordion(event)};
+    button.setAttribute('data-link',topic.replace(/ /g,'_'));
+    let box = solidUI.createElement('NAV','','','border:1px solid #6d8ecb;;border-top:none;padding:0.25rem');
+    // to open first ACCORDION ON STARTUP if(i>0)
+       box.style.display="none";
+    i++;
+    for(let item of topics[topic].submenu){
+      let link = solidUI.createElement('DIV','',item.linkLabel,'padding:0.5rem;cursor:pointer');
+      link.setAttribute('data-link',item.linkUrl);
+      //link.style.display="none";
+      link.onclick=(e)=>{
+        let current = e.target;
+        let link = current.dataset.link;
+        showByClass(e,link)
+      }
+      box.appendChild(link); 
+    }
+    li.appendChild(button)
+    li.appendChild(box);
+    ul.appendChild(li)
   }
-  let tabs = o.orientation==1
-    ?`
-<div style="display: flex; height:100%; width: 100%; flex-direction: row;" class="ui-tabset-container">
-  <nav style="margin: 0;">
-    <ul style="list-style-type: none; display: flex; height: 100%; 
-
-        margin: 0; padding: 0; flex-direction: column"
-
-    >
-     ${items}
-    </ul>
-  </nav>
-  <main style="flex:1; width:auto; height:100% !important; border:none;">
-
-  </main>
-</div>
-`
-    :`
-<div style="display:flex; height:100%; width: 100%; flex-direction: row;" class="ui-tabset-container">
-  <nav style="margin:0; flex;">
-    <ul style="list-style-type: flex; none; display: height: 100%; 
-        margin: 0; padding: 0;"
-    >
-     ${items}
-    </ul>
-  </nav>
-  <main style="flex:1; width:auto; height:100% !important; border: none;">
-
-  </main>
-</div>
-`;
-  let div=document.createElement('DIV');
-  div.style.height="100%";
-  div.innerHTML = tabs;
-  return(div);
+  nav.appendChild(ul)
+  container.appendChild(nav);
+  return container 
 }

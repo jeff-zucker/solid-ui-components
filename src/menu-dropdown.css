@@ -1,0 +1,105 @@
+/** modified by jeff zucker from webdevtrick ( https://webdevtrick.com ) **/
+body {
+  margin:0;
+  padding:0;
+}
+* {
+  font-family:Verdana,Arial,Helvetica,Sans-Serif;
+  color:#083575; 
+}
+.solid-uic-app > DIV > SPAN {color:white;}
+h2 {
+  color:#083575; 
+}
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+} 
+.solid-uic-dropdown-menu ul {
+  Padding: 0;
+  margin: 0;
+  list-style: none;
+  position: relative;
+}
+.solid-uic-dropdown-menu ul li {
+  display:inline-block;
+  z-index:10000;
+}
+.solid-uic-dropdown-menu ul ul {
+  display: none;
+  position: absolute; 
+  top: 40px; 
+}
+.solid-uic-dropdown-menu li > a:after { content:  ' ▼'; }
+.solid-uic-dropdown-menu li > a:only-child:after { content: ''; }
+.solid-uic-dropdown-menu li > span:after { content:  ' ▼'; font-size:0.85em;}
+.solid-uic-dropdown-menu li > span:only-child:after { content: ''; }
+
+.solid-uic-dropdown-menu li > span {
+  margin-right:0.75em;
+}
+.solid-uic-dropdown-menu ul li:hover > ul {
+  display:inherit;
+}
+.solid-uic-dropdown-menu ul ul li {
+  width:230px;
+  float:none;
+  display:list-item;
+  position: relative;
+  z-index:10000;
+}
+.solid-uic-dropdown-menu ul ul ul li {
+  position: relative;
+  top:-40px; 
+  left:230px;
+  z-index:10000;
+}
+.solid-uic-dropdown-menu ul ul li {
+  border: 1px solid white;
+}
+
+
+.solid-uic-dropdown-menu ul, 
+.solid-uic-dropdown-menu ul li {
+  background: #469999; 
+background:#083575; 
+color:#ffffff;
+}
+.solid-uic-dropdown-menu  span { color: #FFF; display:inline-block;width:100%; }
+
+.leftColumn button.selected {
+  background:#083575; 
+  color:white;
+}
+.leftColumn button:hover {
+  background:#6d8ecb;
+  color:white; 
+}
+
+/* ACCORDION ITEM */
+.uic-accordion DIV:hover { 
+  background: #6d8ecb;
+  color:white;
+}
+.uic-accordion DIV.selected { 
+   background:#083575; 
+   color:white;
+}
+
+/* DROPDOWN MENU ITEM  */
+.solid-uic-dropdown-menu span:hover { 
+  background: #6d8ecb;
+  color:black;
+}
+.solid-uic-dropdown-menu span {
+  display:inline-block;
+  padding:0 10px;
+  font-size:1rem;
+  line-height: 40px;
+  text-decoration:none;
+}
+.solid-uic-dropdown-menu > ul > li > span {
+/*  font-size:1.2rem;*/
+}

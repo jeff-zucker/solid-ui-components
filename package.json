@@ -1,6 +1,6 @@
 {
   "name": "solid-ui-components",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "generate high level HTML UI components from RDF",
   "main": "src/solid-ui-components.js",
   "scripts": {
@@ -9,9 +9,4 @@
   "keywords": [],
   "author": "Jeff Zucker",
   "license": "MIT",
-  "dependencies": {
-    "jsdom": "^16.6.0",
-    "mashlib": "^1.6.9",
-    "solid-ui": "^2.4.1"
-  }
 }
