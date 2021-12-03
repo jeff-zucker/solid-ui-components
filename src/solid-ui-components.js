@@ -56,9 +56,9 @@ class SolidUIcomponent {
       else if(obj.termType==="Collection"){
         obj = obj.elements;
         for(let o of obj){
-          o = await this.getComponentHash(o);
-          if(!hash[pred])  hash[pred] = [o];
-          else hash[pred].push(o);
+          o = await this.getComponentHash(o,{});
+          hash[pred] ||= []
+          hash[pred].push(o);
         }
       }
       else {
@@ -67,6 +67,7 @@ class SolidUIcomponent {
         else if(typeof hash[pred] !='ARRAY') hash[pred] = [obj]
         else hash[pred].push(obj);
       }
+      if(hash[pred].length==1) hash[pred]=hash[pred][0];
     }
     return hash ;
   }
@@ -123,10 +124,10 @@ class SolidUIcomponent {
 </div>
 `;
   // if(app.stylesheet) appString=`<link href="${app.stylesheet}" rel="stylesheet">`+appString;
-  const menu = await this.processComponent('',app.menu);
+  const menu = await this.processComponent('','',app.menu);
   let element = solidUI.createElement('SPAN','',appString);
   let toFill = element.querySelector(".fill-me");
-  toFill.appendChild(menu);
+  if(menu) toFill.appendChild(menu);
   if(app.initialContent) {
     let main = element.querySelector(".main");
     main.appendChild(await solidUI.processComponent('',app.initialContent));
@@ -187,6 +188,7 @@ class SolidUIcomponent {
       if(!subject) return null;
       json = await this.getComponentHash(subject)
     }
+    if(!json) {console.log("No ComponentHASH ",subject); return;}
     if(json.type==='App'){
       return await this.renderApp(json);
     }
@@ -196,16 +198,21 @@ class SolidUIcomponent {
     else if(json.type==='Menu'){
       return await this.renderMenu(json.parts);
     }
-    else {
+    else if(json.type==='ModalButton'){
+      return await this.renderModalButton(json.label,json.content)
     }
+    else if(json.type==='Accordion'){
+      return await this.renderAccordion(json.parts)
+    }
+
     let contentWrapper = document.createElement('DIV');
     let results,before,after,content,label;
 
     // DATASOURCE
     let dataSource = typeof json.dataSource==="string" ?await this.getComponentHash(json.dataSource) : json.dataSource ;
-
-// SPARQL-QUERY
-    if(dataSource.type==='SparqlQuery') {
+    
+    // SPARQL-QUERY
+    if(dataSource && dataSource.type==='SparqlQuery') {
       let endpoint = dataSource.endpoint;
       let query = dataSource.query;
       results = await this.sparqlQuery(endpoint,query);
@@ -225,7 +232,6 @@ class SolidUIcomponent {
     }
     if(template.groupOn) {
       results = this.flatten(results,template.groupOn)
-      console.log(66,results)
     }   
     
       if(template=="AccordionMenu"){
@@ -238,7 +244,7 @@ class SolidUIcomponent {
         if(compo) contentWrapper.appendChild(compo);
         return contentWrapper;
       }
-      if(template=="Modal"){
+      if(template=="ModalButton"){
         let compo = await this.makeMmodal(json.label,json.content);
         if(compo) contentWrapper.appendChild(compo);
         return contentWrapper;
@@ -338,6 +344,7 @@ flatten(results,groupOn){
   }
 
   async  comunicaQuery(endpoint,sparqlStr,oneRowOnly){
+   try {
     let comunica = Comunica.newEngine() ;
     function munge(x){
        return x ? x.replace(/^"/,'').replace(/"[^"]*$/,'') :"";
@@ -363,15 +370,15 @@ flatten(results,groupOn){
       else table.push(row);
     }
     return oneRowOnly ?hash :table;
+   }
+   catch(e){console.log(e)}
   }
 
-  async  sparqlQuery(endpoint,queryString){
-    // COMMUNICA
-    let results = await this.comunicaQuery(endpoint,queryString);
-    // RDFLIB
-    // let results = await this.rdflibQuery(kb,endpoint,querystring);  
-    console.log(`got ${results.length} results`);
-    return results;
+  async sparqlQuery(endpoint,queryString){
+    if(typeof Comunica !="undefined")
+      return await this.comunicaQuery(endpoint,queryString);
+    else   
+      return await this.rdflibQuery(kb,endpoint,queryString);  
   }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -403,7 +410,10 @@ flatten(results,groupOn){
   }
 
   results2table(results) {
-    if(!results.length) return document.createElement('SPAN');
+    if(!results || !results.length) {
+      console.log("No results!");
+      return document.createElement('SPAN');
+    }
     let table = document.createElement('TABLE');
     let columnHeaders = Object.keys(results[0]);
     let headerRow = document.createElement('TR');
@@ -479,6 +489,56 @@ flatten(results,groupOn){
     return await this.initInternal(accordion);  
   }
 
+  async renderAccordion (parts) {
+    let bgColor = "#ddd";
+    const accordion = this.createElement('DIV','accordion');
+    if(!parts || !parts.length) return accordion;
+    for(let row of parts){
+       let item = this.createElement( 'DIV' );
+       let rowhead = this.createElement( 'DIV','' );
+       let name = this.createElement('SPAN','',row.label) ;       
+       name.style.display="table-cell";
+       name.style.width="100%";
+       rowhead.appendChild(name);
+       let caret = this.createElement('SPAN','caret-down','\u2304') ;       
+       caret.style.display="table-cell";
+       caret.textAlign="right";
+       rowhead.appendChild(caret);
+       rowhead.style.backgroundColor = bgColor;
+       rowhead.style.padding="0.75em";
+       rowhead.style.border="1px solid grey";
+       rowhead.style.cursor = "pointer";
+       let rowContent = this.createElement( 'DIV',null,row.content );
+       rowContent.style.padding="0.75em";
+       rowContent.style.border="1px solid grey";
+       rowContent.style.borderTop="none"; 
+       rowContent.style.display = "none";
+       rowhead.onclick = (e)=>{
+         let showing = rowContent.style.display === "block" ;
+         let items = accordion.children;
+         for(let i of items) {
+           i.children[1].style.display="none";
+         }
+         rowContent.style.display = showing ?"none" :"block";
+       }
+       item.appendChild(rowhead);
+       item.appendChild(rowContent);
+       item.style.marginBottom = "1em";
+       accordion.appendChild(item);
+    }
+    console.log(accordion)
+    this.simulateClick(accordion.querySelector('DIV DIV DIV'))
+    return await this.initInternal(accordion);  
+  }
+  simulateClick(el){
+    if (el.fireEvent) {
+      el.fireEvent('on' + 'click');
+    } else {
+      var evObj = document.createEvent('Events');
+      evObj.initEvent('click', true, false);
+      el.dispatchEvent(evObj);
+    }
+  }
   async results2accordionZ (results) {
     let bgColor = "#ddd";
     const accordion = this.createElement('DIV','accordion-menu');
@@ -586,10 +646,10 @@ flatten(results,groupOn){
 
   /* MODAL BUTTON
   */
-  async makeModalButton (label,content) {
+  async renderModalButton (label,content) {
     const modal = document.createElement('SPAN');
     modal.innerHTML = `
-  <button onclick="openModal(this)">${label}</button>
+  <button onclick="openModal(this)" style="cursor:pointer">${label}</button>
   <div style="display:none" class="modal">
     <div class="modal-content">
       <div class="close" onclick="closeModal(this)">&times;</div>
@@ -627,22 +687,24 @@ flatten(results,groupOn){
     return type[0] || "";
   }
 
-  async  loadFromMemory(uri){
-    uri = uri.replace(/^internal:/,'');
+  loadFromMemory(sentUri){
+    let uri = sentUri //.replace(/^inline:/,'');
+    if( kb.any(null,null,null,$rdf.sym(uri)) ) return $rdf.sym(uri);
     let [eName,fragment] = uri.split(/#/);
     let uiString = document.getElementById(eName).innerText;
     try {
-      $rdf.parse(  uiString, kb, "data:inMemory", "text/turtle" ); 
-      return("data:inMemory#"+uri);
+      $rdf.parse(  uiString, kb, uri, "text/turtle" ); 
+      return($rdf.sym(uri));
     }
     catch(e) { console.log(e) }
   }
 
   async  loadUnlessLoaded(uri){
     try {
-      if(!uri) return;
       if(uri.termType && uri.termType==="BlankNode") return uri;
       uri = typeof uri==="object" ?uri.uri :uri;
+      if(!uri) return;
+      if(uri.startsWith('inline')) return this.loadFromMemory(uri);
       if(!uri.startsWith('http')) uri = window.location.href.replace(/\/[^\/]*$/,'/') + uri;
       const mungedUri = uri.replace(/\#[^#]*$/,'');
       let graph = $rdf.sym(mungedUri);

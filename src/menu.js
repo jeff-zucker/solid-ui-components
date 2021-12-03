@@ -2,7 +2,7 @@ class Menu {
 
   async render( json ){
     if(typeof json==='string'){
-      json = await solidUI.processComponent('',json);
+      json = await solidUI.processComponent('','',json);
     }
     let nav     = solidUI.createElement('NAV','solid-uic-dropdown-menu')
     let topUL   = document.createElement('UL')
