@@ -297,7 +297,7 @@ flatten(results,groupOn){
         newResults[key][k]=row[k];
         continue;
       }  
-      if(newResults[key][k]===row[k]) continue;
+      if(newResults[key][k].includes(row[k])) continue;
       if(typeof newResults[key][k]!="object") newResults[key][k]=[newResults[key][k]]
       newResults[key][k].push(row[k])
     }
@@ -382,7 +382,7 @@ flatten(results,groupOn){
     function fillOneTemplateRow(templateStr,object){
       for(let o of Object.keys(object) ){
         let newStuff=object[o]||" ";
-        if(typeof newStuff==='object') newStuff = newStuff.join(" - ");
+        if(typeof newStuff==='object') newStuff = newStuff.join(", ");
         let re = new RegExp( `\\$\\{${o}\\}`, 'gi' );
         templateStr  = templateStr.replace( re, newStuff );
       }
