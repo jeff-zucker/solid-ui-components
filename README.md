@@ -4,6 +4,8 @@ Use RDF to create data-driven apps, web pages, and user interfaces
 
 This is a *Work in Progress*.  It works fine but I have not finalized the ontology, cleaned the code or re-added things like forms which worked in a previous version.
 
+Please see this [demo](https://jeff-zucker.github.io/solid-ui-components/demo.html) for simple examples and [this website](https://jeff-zucker.solidcommunity.net/sp/) for a website that is entirely built using this library.
+
 ## Prerequisites
 
 You need to include mashlib and comunica in your HTML. The easiest way is using CDNs.  See the sample.html.
