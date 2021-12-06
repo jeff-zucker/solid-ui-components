@@ -1,0 +1,170 @@
+<!DOCTYPE html><html><head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <link rel="stylesheet" href="/solid/solid-ui-components/src/modalButton.css">
+  <link rel="stylesheet" href="/solid/solid-ui-components/src/menu-dropdown.css">
+  <script src="https://solidcommunity.net/mashlib.js"></script>
+  <script src="/solid/solid-ui-components/src/menu.js"></script>
+  <script src="/solid/solid-ui-components/src/solid-ui-components.js"></script>
+  <script src="http://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
+  <style>
+    pre {font-size:small;}
+    body {padding:1em;}
+  </style>
+</head><body>
+  <table>
+<!--
+background/color             // main content
+unselBackground/unselColor   // unselected tabs/menu-items
+selBackground/selColor       // selected tabs/menu-items
+
+<pre><script id="inline:app.ttl" type="text/turtle">
+  @prefix ui: <https://www.w3.org/ns/ui#> .
+  <#MyApp>
+    ui:background "#fff" ;
+    ui:color "#000" ;
+    ui:parts (
+      [ui:label "Tab1"; ui:content "<b>Tab1</b> Content"]
+      [ui:label "Submenu"; a ui:Menu; ui:parts(
+        [ui:label "Tab2a"; ui:content "Tab2a Content"]
+        [ui:label "Tab2b"; ui:content "Tab2b Content"]
+      )]
+      [ui:label "Tab3"; ui:content "Tab3 Content"]
+    ) .</script></pre>
+<td data-solid_ui_component="inline:app.ttl#MyApp"></td>
+-->  
+  <tr>
+    <td><h3>Dropdown Menu</h3>
+      <pre><script id="inline:menu.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+<#MyMenu>
+  a ui:Menu ;
+  ui:parts (
+    [ui:label "Tab1"; ui:content "<b>Tab1</b> Content"]
+    [ui:label "Submenu"; a ui:Menu; ui:parts(
+      [ui:label "Tab2a"; ui:content "Tab2a Content"]
+      [ui:label "Tab2b"; ui:content "Tab2b Content"]
+    )]
+    [ui:label "Tab3"; ui:content "Tab3 Content"]
+  ) .</script></pre>
+    </td>
+    <td data-solid_ui_component="inline:menu.ttl#MyMenu"></td>
+  </tr>
+
+  <tr>
+  <td><h3>Horizontal Tabs</h3>
+    <pre><script id="inline:tabs.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+<#MyTabs>
+  a ui:Tabset ;
+  ui:orientation "horizontal" ;
+  ui:position "right" ;
+  ui:parts (
+    [ui:label "Tab1"; ui:content "<b>Tab1</b> Content"]
+    [ui:label "Tab2"; ui:content "Tab2 Content"]
+    [ui:label "Tab3"; ui:content "Tab3 Content"]
+  ) .</script></pre>
+  </td>
+  <td data-solid_ui_component="inline:tabs.ttl#MyTabs"></td>
+</tr>
+
+  <td><h3>Vertical Tabs</h3>
+      <pre><script id="inline:vtabs.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+<#MyVtabs>
+  a ui:Tabset ;
+  ui:orientation "vertical" ;
+  ui:parts (
+    [ui:label "Tab1"; ui:content "<b>Tab1</b> Content"]
+    [ui:label "Tab2"; ui:content "Tab2 Content"]
+    [ui:label "Tab3"; ui:content "Tab3 Content"]
+  ) .</script></pre>
+    </td>
+    <td data-solid_ui_component="inline:vtabs.ttl#MyVtabs"></td>
+  </tr>
+
+<tr>
+  <td><h3>Vertical Tabs from SPARQL</h3>
+    <pre><script id="inline:vstabs.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix data: <https://jeff-zucker.solidcommunity.net/sp/glossary-data.ttl> .
+<#MyVStabs>
+a ui:Tabset ;
+  ui:orientation "vertical" ;
+  ui:dataSource [
+    a ui:SparqlQuery ;
+    ui:endpoint data: ;
+    ui:query """
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      SELECT ?label ?content WHERE {
+        ?x a skos:Concept; skos:prefLabel ?label; skos:definition ?content .
+      } LIMIT 3
+    """
+] .</script></pre>
+  </td>
+  <td data-solid_ui_component="inline:vstabs.ttl#MyVStabs"></td>
+</tr>
+
+<td><h3>Accordion</h3>
+  <pre><script id="inline:accordion.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+<#MyAccordion>
+a ui:Accordion ;
+ui:parts (
+  [ui:label "Tab1"; ui:content "<b>Tab1</b> Content"]
+  [ui:label "Tab2"; ui:content "Tab2 Content"]
+  [ui:label "Tab3"; ui:content "Tab3 Content"]
+) .</script></pre>
+</td>
+<td data-solid_ui_component="inline:accordion.ttl#MyAccordion"></td>
+</tr>
+
+  <tr>
+      <td><h3>Modal Button</h3>
+<pre><script id="inline:modal.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+<#MyModal>
+  a ui:ModalButton ;
+  ui:label "Click me!" ;
+  ui:content """
+    <p>This could be anything, including another component, like this:</p>
+    <div data-solid_ui_component="inline:table.ttl#MyTable"></div>
+  """ .</script></pre>
+      </td>
+      <td data-solid_ui_component="inline:modal.ttl#MyModal"></td>
+    </tr>
+    <tr>
+      <td><h3>Table</h3>
+<pre><script id="inline:table.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix data: <https://jeff-zucker.solidcommunity.net/sp/glossary-data.ttl> .
+<#MyTable>
+  a ui:Component;
+  ui:template ui:Table ;
+  ui:dataSource [
+    a ui:SparqlQuery ;
+    ui:endpoint data: ;
+    ui:query """
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      SELECT ?Term ?Definition WHERE {
+        ?x a skos:Concept; skos:prefLabel ?Term; skos:definition ?Definition .
+      } 
+      LIMIT 3
+    """
+  ] .</script></pre>
+      </td>
+      <td data-solid_ui_component="inline:table.ttl#MyTable"></td>
+    </tr>
+  </table>
+</body>
+  <script>solidUI.init();</script>
+</html>
+<!--
+    <td><h3></h3>
+      <pre><script id="inline:.ttl" type="text/turtle" style="display:block">
+@prefix ui: <https://www.w3.org/ns/ui#> .
+<#MyTable>
+          </script></pre>
+    </td>
+    <td data-solid_ui_component="inline:table.ttl#MyTable"></td>
+  </tr>
+-->  

@@ -1,24 +1,11 @@
 const proxy = "https://solidcommunity.net/proxy?uri=";
 const fetch = window.SolidFetch || window.fetch ;
-const validComponentType = {
-  Table : 1,
-  Accordion : 1,
-  Menu : 1,
-  Tabset : 1,
-  ModalButton : 1,
-  DescriptionList : 1,
-  Template : 1,
-  DataSource : 1,
-  SparqlQuery : 1,
-  PageElement : 1,
-  TemplateMenu : 1,
-};
-  const $rdf = UI.rdf;
-  const kb = $rdf.graph();
-  const fetcher = $rdf.fetcher(kb);
-  const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
-  const ui = $rdf.Namespace('https://www.w3.org/ns/ui#');
-  const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+const $rdf = UI.rdf;
+const kb = $rdf.graph();
+const fetcher = $rdf.fetcher(kb);
+const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
+const ui = $rdf.Namespace('https://www.w3.org/ns/ui#');
+const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 
 class SolidUIcomponent {
 
@@ -78,14 +65,11 @@ class SolidUIcomponent {
   }
 
   async renderApp(app){
-    app.background ||= "white";
-    app.color ||= "black";
-    app.orientation ||= "horizontal";
-    app.position ||= "left";
+    app = this.setDefaults(app);
     app.logo = app.logo ?`<img src="${app.logo}" style="height:3rem; display:inline-block;padding-left:1rem;">` : "";
     let appString = app.orientation==='horizontal' 
 ?`
-<div class="solid-uic-app" style="display:table; height: 3rem; padding-top:1rem;padding-bottom:0;width:100%;background:${app.background};color:$app.color">
+<div class="solid-uic-app" style="display:table; height: 3rem; padding-top:1rem;padding-bottom:0;width:100%;background:${app.unselBackground};color:${app.unselColor}">
 
   <div style="display:table-row; height:3rem;">
     ${app.logo}
@@ -94,8 +78,8 @@ class SolidUIcomponent {
     </span>
   </div>
 
-  <div style="display:table-row; height:2rem; algin:right;">
-    <div class="fill-me" style="width:96%;text-align:${app.position};color:${app.color}">
+  <div style="display:table-row; height:2rem; algin:${app.zposition};">
+    <div class="fill-me" style="width:100%;text-align:${app.position};">
     </div>
   </div>
 
@@ -123,10 +107,10 @@ class SolidUIcomponent {
   </div>
 </div>
 `;
-  // if(app.stylesheet) appString=`<link href="${app.stylesheet}" rel="stylesheet">`+appString;
-  const menu = await this.processComponent('','',app.menu);
+  if(app.stylesheet) appString=`<link href="${app.stylesheet}" rel="stylesheet">`+appString;
   let element = solidUI.createElement('SPAN','',appString);
   let toFill = element.querySelector(".fill-me");
+  const menu = await this.processComponent(toFill,app.menu);
   if(menu) toFill.appendChild(menu);
   if(app.initialContent) {
     let main = element.querySelector(".main");
@@ -189,34 +173,47 @@ class SolidUIcomponent {
       json = await this.getComponentHash(subject)
     }
     if(!json) {console.log("No ComponentHASH ",subject); return;}
+
+    // default color,orientation,position
+    json = this.getDefaults(json);
+
+    // DATASOURCE
+    let dataSource = typeof json.dataSource==="string" ?await this.getComponentHash(json.dataSource) : json.dataSource ;
+    if(dataSource && dataSource.type==='SparqlQuery') {
+      let endpoint = dataSource.endpoint;
+      let query = dataSource.query;
+      json.parts = await this.sparqlQuery(endpoint,query);
+    }
+    if(json.parts && json.groupOn){
+      json.parts = this.flatten(json.parts,json.groupOn)
+      console.log(json.groupOn,json.parts)
+    }
+    
     if(json.type==='App'){
       return await this.renderApp(json);
     }
     else if(json.type==='Link'){
-      return await displayLink(element,json);
+      return await displayLink(element,json,element);
     }
     else if(json.type==='Menu'){
-      return await this.renderMenu(json.parts);
+      return await this.renderMenu(json,element);
     }
     else if(json.type==='ModalButton'){
-      return await this.renderModalButton(json.label,json.content)
+      return await this.renderModalButton(json)
     }
     else if(json.type==='Accordion'){
-      return await this.renderAccordion(json.parts)
+      return await this.renderAccordion(json)
+    }
+    else if(json.type==='AccordionMenu'){
+      return await this.renderAccordionMenu(json)
+    }
+    else if(json.type==='Tabset'){
+      return await this.renderTabset(json)
     }
 
     let contentWrapper = document.createElement('DIV');
     let results,before,after,content,label;
 
-    // DATASOURCE
-    let dataSource = typeof json.dataSource==="string" ?await this.getComponentHash(json.dataSource) : json.dataSource ;
-    
-    // SPARQL-QUERY
-    if(dataSource && dataSource.type==='SparqlQuery') {
-      let endpoint = dataSource.endpoint;
-      let query = dataSource.query;
-      results = await this.sparqlQuery(endpoint,query);
-    }
 // RECORD
     if(json.type==='Record') {
       label = this.getValue( dataSource, ui('label') );
@@ -224,7 +221,7 @@ class SolidUIcomponent {
       results = {label,content} ;
     }
 
-    
+results ||= json.parts;    
 // TEMPLATE
     let template = json.template;
     if(!template){
@@ -240,7 +237,7 @@ class SolidUIcomponent {
         return contentWrapper;
       }
       if(template=="Table"){
-        let compo = await this.runBuiltIn(template,results);
+        let compo = await this.runBuiltIn(json,template,results);
         if(compo) contentWrapper.appendChild(compo);
         return contentWrapper;
       }
@@ -319,6 +316,13 @@ flatten(results,groupOn){
   SPARQL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+  async sparqlQuery(endpoint,queryString){
+    if(typeof Comunica !="undefined")
+      return await this.comunicaQuery(endpoint,queryString);
+    else   
+      return await this.rdflibQuery(kb,endpoint,queryString);  
+  }
+
   async rdflibQuery(kb,endpoint,queryString){
     await this.loadUnlessLoaded(endpoint);
     return new Promise(async (resolve,reject)=>{
@@ -374,16 +378,34 @@ flatten(results,groupOn){
    catch(e){console.log(e)}
   }
 
-  async sparqlQuery(endpoint,queryString){
-    if(typeof Comunica !="undefined")
-      return await this.comunicaQuery(endpoint,queryString);
-    else   
-      return await this.rdflibQuery(kb,endpoint,queryString);  
-  }
-
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   DISPLAY METHODS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+getDefaults(json){
+  if(typeof json=="string") json = solidUI.processComponent('',json)
+  json.background ||= solidUI.background || "#fff";
+  json.color ||= solidUI.color || "#000";
+  json.selBackground ||= solidUI.selBackground || "#559";
+  json.selColor ||= solidUI.selColor || "#fff";
+  json.unselBackground ||= solidUI.unselBackground || "#99d";
+  json.unselColor ||= solidUI.unselColor || "#000";
+  json.orientation ||= solidUI.orientation || "horizontal";
+  json.position ||= solidUI.position || "left";
+  return(json);
+}
+setDefaults(json){
+  if(typeof json=="string") json = solidUI.processComponent('',json)
+  this.background = json.background;
+  this.color = json.color;
+  this.selBackground = json.selBackground;
+  this.selColor = json.selColor;
+  this.unselBackground = json.unselBackground;
+  this.unselColor = json.unselColor;
+  this.orientation = json.orientation;
+  this.position = json.position
+  return(this.getDefaults(json));
+}
 
   fillTemplate(templateStr,object){
     function fillOneTemplateRow(templateStr,object){
@@ -402,14 +424,15 @@ flatten(results,groupOn){
     return string;
   }
 
-  runBuiltIn(template,results){
-    if(template.match(/Table/)) return this.results2table(results);
+  runBuiltIn(json,template,results){
+    if(template.match(/Table/)) return this.results2table(json,results);
     if(template.match(/Modal/)) return this.results2modal(results);
     if(template.match(/Accordion/)) return tabset(results);
     if(template.match(/DescriptionList/)) return this.results2descriptionList(results);
   }
 
-  results2table(results) {
+  results2table(json) {
+    const results = json.parts;
     if(!results || !results.length) {
       console.log("No results!");
       return document.createElement('SPAN');
@@ -422,7 +445,8 @@ flatten(results,groupOn){
       cell.innerHTML = c;
       cell.style.border="1px solid black";
       cell.style.padding="0.5em";
-      cell.style.background="#ddd";
+      cell.style.background=json.unselBackground;
+      cell.style.color=json.unselColor;
       headerRow.appendChild(cell);
     }
     table.appendChild(headerRow);
@@ -433,14 +457,17 @@ flatten(results,groupOn){
         cell.innerHTML = row[col];
         cell.style.border="1px solid black";
         cell.style.padding="0.5em";
-      rowElement.appendChild(cell);
+        cell.style.backgroundColor=json.background;
+        cell.style.color=json.color;
+        rowElement.appendChild(cell);
       }
       table.appendChild(rowElement);
     }
     table.style.borderCollapse="collapse";
     return table;
   }
-  async results2accordion (results) {
+  async renderAccordionLinks (json) {
+    const results = json;
     let bgColor = "#ddd";
     const accordion = this.createElement('DIV','accordion-menu');
     accordion.classList.add('horizontal');
@@ -489,14 +516,14 @@ flatten(results,groupOn){
     return await this.initInternal(accordion);  
   }
 
-  async renderAccordion (parts) {
-    let bgColor = "#ddd";
+  async renderAccordion (json) {
+    const parts = json.parts;
     const accordion = this.createElement('DIV','accordion');
     if(!parts || !parts.length) return accordion;
     for(let row of parts){
        let item = this.createElement( 'DIV' );
        let rowhead = this.createElement( 'DIV','' );
-       let name = this.createElement('SPAN','',row.label) ;       
+       let name = this.createElement('SPAN','',row.label || row.topic) ;
        name.style.display="table-cell";
        name.style.width="100%";
        rowhead.appendChild(name);
@@ -504,11 +531,31 @@ flatten(results,groupOn){
        caret.style.display="table-cell";
        caret.textAlign="right";
        rowhead.appendChild(caret);
-       rowhead.style.backgroundColor = bgColor;
+       rowhead.style.backgroundColor = json.unselBackground;
+       rowhead.style.color = json.unselColor;
        rowhead.style.padding="0.75em";
        rowhead.style.border="1px solid grey";
        rowhead.style.cursor = "pointer";
-       let rowContent = this.createElement( 'DIV',null,row.content );
+       let rowContent = this.createElement( 'DIV');
+       if(row.content) rowContent.innerHTML = row.content;
+       else {
+        console.log(json)
+        for(let i=0;i<row.linkLabel.length;i++){
+          let label = row.linkLabel[i];
+          let link = row.linkUrl[i];
+          let button=solidUI.createElement('BUTTON','',label);
+          button.setAttribute('data-link',link) ;
+          button.style.width="100%";
+          button.style.border="none";
+          button.style.background="transparent";
+          button.style.marginBottom="0.25em";
+          button.style.cursor="pointer";
+          button.onclick = (e) => {
+            showByClass(e);
+          }
+          rowContent.appendChild(button);
+        }
+       }
        rowContent.style.padding="0.75em";
        rowContent.style.border="1px solid grey";
        rowContent.style.borderTop="none"; 
@@ -521,6 +568,8 @@ flatten(results,groupOn){
          }
          rowContent.style.display = showing ?"none" :"block";
        }
+       rowContent.style.backgroundColor = json.background;
+       rowContent.style.color = json.color;
        item.appendChild(rowhead);
        item.appendChild(rowContent);
        item.style.marginBottom = "1em";
@@ -529,6 +578,68 @@ flatten(results,groupOn){
     console.log(accordion)
     this.simulateClick(accordion.querySelector('DIV DIV DIV'))
     return await this.initInternal(accordion);  
+  }
+  async renderTabset (json) {
+    const parts = json.parts
+    const tabs = this.createElement('DIV','solid-uic-tabs');
+    const nav = this.createElement('NAV');
+    if(json.orientation==="vertical")
+      nav.style.textAlign = "right";
+    else
+      nav.style.textAlign = json.position;
+    let mainDisplay = this.createElement( 'DIV' );
+    mainDisplay.style.backgroundColor = json.background;
+    mainDisplay.style.color = json.color;
+    let r = 0;    
+    for(let row of parts){
+      r++;
+      let rowhead = this.createElement( 'BUTTON',r,row.label );
+      rowhead.style.backgroundColor = json.unselBackground;
+      rowhead.style.color = json.unselColor;
+      rowhead.style.padding="0.75em";
+      rowhead.style.border="1px solid grey";
+      rowhead.style.cursor = "pointer";
+      let rowContent = this.createElement( 'DIV',r,row.content );
+      rowContent.style.padding="0.75em";
+      if(json.orientation==="horizontal") rowContent.style.border="1px solid grey";  
+      rowContent.style.display = "none";
+      rowhead.onclick = (e)=>{
+        let items = tabs.querySelector('DIV').children;
+        for(let i of items) {
+          i.style.display="none";
+        }
+        for(let n of nav.children) {
+          n.style.backgroundColor=json.unselBackground;
+          n.style.color=json.unselColor;
+        }
+        rowhead.style.backgroundColor = json.selBackground;
+        rowhead.style.color = json.selColor;
+        rowContent.style.display = "block";
+      }
+      nav.appendChild(rowhead);
+      mainDisplay.appendChild(rowContent);
+    if(json.orientation==="vertical"){
+      rowhead.style.display="block";
+      rowhead.style.marginBottom = "0.5em";
+      rowhead.style.width="100%"
+      tabs.style.width="100%";
+      tabs.style.height="100%";
+      tabs.style.display = "table-row";
+      nav.style.display = "table-cell";
+      mainDisplay.style.display = "table-cell";
+      mainDisplay.style.display="block"
+      mainDisplay.style.height = "100%";
+      rowContent.style.height = "100%";
+    }
+    else {
+      rowhead.style.marginRight = "0.5em";
+      rowhead.style.borderBottom = "none";
+    }
+  }
+    tabs.appendChild(nav);
+    tabs.appendChild(mainDisplay);
+    this.simulateClick(tabs.querySelector('BUTTON'))
+    return await this.initInternal(tabs);  
   }
   simulateClick(el){
     if (el.fireEvent) {
@@ -539,7 +650,8 @@ flatten(results,groupOn){
       el.dispatchEvent(evObj);
     }
   }
-  async results2accordionZ (results) {
+  async renderAccordionLinks2 (json) {
+    const results = json.parts;
     let bgColor = "#ddd";
     const accordion = this.createElement('DIV','accordion-menu');
     accordion.classList.add('horizontal');
@@ -589,17 +701,16 @@ flatten(results,groupOn){
   }
 
 
-  /* ACCORDION
+  /* ACCORDION MENU
   */
-  async results2accordionX(results){
+  async renderAccordionMenu(json){
+    const results = json.parts;
 //    const accordion = solidUI.createElement('DIV','accordion-menu');
     const accordion = solidUI.createElement('DIV','dropdown-menu');
 //    accordion.classList.add('dropdown-menuhorizontal');
     const leftCol = solidUI.createElement('DIV','left-column');
     let mid="";
     let got  = {}
-    let iframe = solidUI.createElement('IFRAME');
-    console.log(results)
     let topics = results.map((row)=>{
       if(!got[row.topic]) {
         got[row.topic]=1;
@@ -646,14 +757,14 @@ flatten(results,groupOn){
 
   /* MODAL BUTTON
   */
-  async renderModalButton (label,content) {
+  async renderModalButton (json) {
     const modal = document.createElement('SPAN');
     modal.innerHTML = `
-  <button onclick="openModal(this)" style="cursor:pointer">${label}</button>
+  <button style="background-color:${json.unselBackground};color:${json.unselColor};padding:1em;cursor:pointer" onclick="openModal(this)">${json.label}</button>
   <div style="display:none" class="modal">
     <div class="modal-content">
       <div class="close" onclick="closeModal(this)">&times;</div>
-      ${content}
+      ${json.content}
     </div>
   </div>
     `;
@@ -767,7 +878,7 @@ flatten(results,groupOn){
         continue;
       }
       if( (element.getAttribute('value')).indexOf(wanted)>-1 ) element.style.display="block";
-      // if(element.classList.contains(wanted)) element.style.display="block";
+    //  if(element.classList.contains(wanted)) element.style.display="block";
       else element.style.display="none";
     }
     highlightMenuSelection(event)
@@ -799,20 +910,35 @@ flatten(results,groupOn){
       }  
     } 
   }
-  async function displayLink( e, item ){
+  async function displayLink( e, item, element ){
     let containingEl;
-    if(e) {
+    if(element && !e){
+      containingEl = element;
+    }
+    else if(e) {
       const dropdown = e.target.closest('.solid-uic-app');
-      containingEl = dropdown.querySelector('.main');
-      containingEl.innerHTML="";
+      containingEl = e.target.closest('NAV').parentElement.children[1];
+      if(!containingEl && dropdown) {
+        containingEl = dropdown.querySelector('.main');
+      }
     } 
     //containingEl ||= document.body.querySelector('.main');
     //containingEl.innerHTML="";
     //alert(containingEl)
-    let content = "";
+    containingEl ||= document.body.querySelector('.main');
+    // alert(containingEl.tagName)
+    if(containingEl) containingEl.innerHTML=""
+
+    let content = item.content;
+    if(content){
+      let span = document.createElement('SPAN')
+      span.innerHTML = content;
+      containingEl.appendChild(span);
+      return containingEl;
+    }
     if(item.type!="Link") {
-      let r = await solidUI.processComponent('','',item) ;
-      containingEl.appendChild(r);
+      content = await solidUI.processComponent('','',item) ;
+      containingEl.appendChild(content);
       return containingEl;
 //      return( await solidUI.processComponent(containingEl,item.component) );
     }
@@ -843,6 +969,7 @@ flatten(results,groupOn){
         iframe.style.width="100%";
         iframe.src = item.href;
         if(containingEl) {
+          containingEl.innerHTML="";
           containingEl.appendChild(iframe);
           return containingEl;
         }
