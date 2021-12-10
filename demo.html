@@ -1,10 +1,17 @@
 <!DOCTYPE html><html><head>
   <meta content="text/html; charset=UTF-8" http-equiv="content-type">
-  <link rel="stylesheet" href="./src/modalButton.css">
-  <link rel="stylesheet" href="./src/menu-dropdown.css">
-  <script src="https://solidcommunity.net/mashlib.js"></script>
-  <script src="./src/menu.js"></script>
-  <script src="./src/solid-ui-components.js"></script>
+  <link rel="stylesheet" href="../src/modalButton.css">
+  <link rel="stylesheet" href="../src/menu-dropdown.css">
+  <script src="https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1.11.2/dist/solid-client-authn.bundle.js">
+  </script>
+  <script>
+    const iscan = solidClientAuthentication;
+    var session = iscan.getDefaultSession();
+    window.SolidFetch = window.SolidFetcher = session.fetch;
+  </script>  
+  <script src="/mashlib.js"></script>
+  <script src="../src/menu.js"></script>
+  <script src="../src/solid-ui-components.js"></script>
   <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
   <style>
     pre {font-size:small;}
@@ -12,13 +19,14 @@
   </style>
 </head><body>
   <table>
+
 <!--
 background/color             // main content
 unselBackground/unselColor   // unselected tabs/menu-items
 selBackground/selColor       // selected tabs/menu-items
 
 <pre><script id="inline:app.ttl" type="text/turtle">
-  @prefix ui: <https://www.w3.org/ns/ui#> .
+  @prefix ui: <http://www.w3.org/ns/ui#> .
   <#MyApp>
     ui:background "#fff" ;
     ui:color "#000" ;
@@ -32,10 +40,23 @@ selBackground/selColor       // selected tabs/menu-items
     ) .</script></pre>
 <td data-solid_ui_component="inline:app.ttl#MyApp"></td>
 -->  
+
+<tr>
+    <td><h3>Form</h3>
+      <pre><script id="inline:form.ttl" type="text/turtle" style="display:block">@prefix ui: <http://www.w3.org/ns/ui#> .
+@prefix ex: <https://jeff-zucker.solidcommunity.net/public/form-test.ttl#> .
+<#MyFormComponent>
+  a ui:FormComponent ;
+  ui:formSubject ex:MyFormSubject ;
+  ui:form ex:MyForm .</script></pre>
+</td>
+    <td data-solid_ui_component="inline:form.ttl#MyFormComponent"></td>
+  </tr>
+
   <tr>
     <td><h3>Dropdown Menu</h3>
       <pre><script id="inline:menu.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 <#MyMenu>
   a ui:Menu ;
   ui:parts (
@@ -53,7 +74,7 @@ selBackground/selColor       // selected tabs/menu-items
   <tr>
   <td><h3>Horizontal Tabs</h3>
     <pre><script id="inline:tabs.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 <#MyTabs>
   a ui:Tabset ;
   ui:orientation "horizontal" ;
@@ -69,7 +90,7 @@ selBackground/selColor       // selected tabs/menu-items
 
   <td><h3>Vertical Tabs</h3>
       <pre><script id="inline:vtabs.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 <#MyVtabs>
   a ui:Tabset ;
   ui:orientation "vertical" ;
@@ -85,7 +106,7 @@ selBackground/selColor       // selected tabs/menu-items
 <tr>
   <td><h3>Vertical Tabs from SPARQL</h3>
     <pre><script id="inline:vstabs.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 @prefix data: <https://jeff-zucker.solidcommunity.net/sp/glossary-data.ttl> .
 <#MyVStabs>
 a ui:Tabset ;
@@ -106,7 +127,7 @@ a ui:Tabset ;
 
 <td><h3>Accordion</h3>
   <pre><script id="inline:accordion.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 <#MyAccordion>
 a ui:Accordion ;
 ui:parts (
@@ -121,7 +142,7 @@ ui:parts (
   <tr>
       <td><h3>Modal Button</h3>
 <pre><script id="inline:modal.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 <#MyModal>
   a ui:ModalButton ;
   ui:label "Click me!" ;
@@ -135,7 +156,7 @@ ui:parts (
     <tr>
       <td><h3>Table</h3>
 <pre><script id="inline:table.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 @prefix data: <https://jeff-zucker.solidcommunity.net/sp/glossary-data.ttl> .
 <#MyTable>
   a ui:Component;
@@ -161,7 +182,7 @@ ui:parts (
 <!--
     <td><h3></h3>
       <pre><script id="inline:.ttl" type="text/turtle" style="display:block">
-@prefix ui: <https://www.w3.org/ns/ui#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
 <#MyTable>
           </script></pre>
     </td>

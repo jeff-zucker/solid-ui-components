@@ -1,10 +1,10 @@
 const proxy = "https://solidcommunity.net/proxy?uri=";
-const fetch = window.SolidFetch || window.fetch ;
+const fetch = window.SolidFetcher || window.fetch ;
 const $rdf = UI.rdf;
-const kb = $rdf.graph();
+const kb = UI.store;
 const fetcher = $rdf.fetcher(kb);
 const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
-const ui = $rdf.Namespace('https://www.w3.org/ns/ui#');
+const ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
 const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 
 class SolidUIcomponent {
@@ -32,7 +32,7 @@ class SolidUIcomponent {
     let predicatePhrases = kb.match(subject);
     hash ||= {}
     for(let p of predicatePhrases){
-      let pred = p.predicate.value.replace(/http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#/,'').replace(/https:\/\/www.w3.org\/ns\/ui#/,'');
+      let pred = p.predicate.value.replace(/http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#/,'').replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
       let obj = p.object;
       if(obj.termType==="BlankNode"){
         obj = await this.getComponentHash(obj);
@@ -49,7 +49,7 @@ class SolidUIcomponent {
         }
       }
       else {
-        obj = obj.value.replace(/https:\/\/www.w3.org\/ns\/ui#/,'');
+        obj = obj.value.replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
         if(!hash[pred])  hash[pred] = obj;
         else if(typeof hash[pred] !='ARRAY') hash[pred] = [obj]
         else hash[pred].push(obj);
@@ -204,8 +204,8 @@ class SolidUIcomponent {
     else if(json.type==='Accordion'){
       return await this.renderAccordion(json)
     }
-    else if(json.type==='AccordionMenu'){
-      return await this.renderAccordionMenu(json)
+    else if(json.type==='FormComponent'){
+      return await this.renderForm(json)
     }
     else if(json.type==='Tabset'){
       return await this.renderTabset(json)
@@ -575,7 +575,6 @@ setDefaults(json){
        item.style.marginBottom = "1em";
        accordion.appendChild(item);
     }
-    console.log(accordion)
     this.simulateClick(accordion.querySelector('DIV DIV DIV'))
     return await this.initInternal(accordion);  
   }
@@ -755,6 +754,34 @@ setDefaults(json){
     return await this.initInternal(accordion);  
   }
 
+  async renderForm(json){
+    const container = document.createElement("DIV");
+    const dom = window.document;
+    const form = await this.loadUnlessLoaded(json.form);
+    const subject = await this.loadUnlessLoaded(json.formSubject);
+    let doc = json.formResultDocument;
+    if(!doc && subject.doc) doc = subject.doc();
+    const script = json.script || function(){};
+    try {
+      await UI.widgets.appendForm(dom, container, {}, subject, form, doc, script);
+    }
+    catch(e){console.log(e)}  
+    return container;
+  }
+
+  async renderContainer(json){
+    const container = document.createElement("span");
+    const dom = window.document;
+    const form = await this.loadUnlessLoaded(json.form);
+    const subject = await this.loadUnlessLoaded(json.formSubject);
+    console.log(77,kb.match(form))
+    const doc = json.formResultDocument || subject.doc();
+    await UI.widgets.appendForm(dom, container, {}, subject, form, doc);
+    console.log(container)
+    return container;
+  }
+
+
   /* MODAL BUTTON
   */
   async renderModalButton (json) {
@@ -790,7 +817,7 @@ setDefaults(json){
   }
   getComponentType(subject){
     if(!subject) return null;
-    let uiNamespace = 'https://www.w3.org/ns/ui#';
+    let uiNamespace = 'http://www.w3.org/ns/ui#';
     let type = kb.each( subject, rdf('type') ).map( (object) =>{
       object = object.value;
       if(object.match(/ns\/ui#/)) return object.replace(/.*\#/,'');
