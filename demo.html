@@ -4,11 +4,11 @@
   <link rel="stylesheet" href="./src/menu-dropdown.css">
   <script src="https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1.11.2/dist/solid-client-authn.bundle.js">
   </script>
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
   <script>
     const iscan = solidClientAuthentication;
     var session = iscan.getDefaultSession();
-    window.SolidFetch = window.SolidFetcher = async (u,o)=>{alert(2); return session.fetch(u,o);}
-    window.SolidFetcher(); 
+    window.SolidFetch = window.SolidFetcher = async (u,o)=>{return session.fetch(u,o);}
   </script>  
   <script src="https://solidcommunity.net/mashlib.js"></script>
   <script src="./src/menu.js"></script>
