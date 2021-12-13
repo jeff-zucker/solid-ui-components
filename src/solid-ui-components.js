@@ -1,8 +1,7 @@
 const proxy = "https://solidcommunity.net/proxy?uri=";
-const fetch = window.SolidFetcher || window.fetch ;
 const $rdf = UI.rdf;
 const kb = UI.store;
-const fetcher = $rdf.fetcher(kb,{fetch:fetch});
+const fetcher = $rdf.fetcher(kb);
 const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
 const ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
 const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
