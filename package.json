@@ -1,6 +1,6 @@
 {
   "name": "solid-ui-components",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "generate high level HTML UI components from RDF",
   "main": "src/solid-ui-components.js",
   "scripts": {
