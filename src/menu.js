@@ -1,6 +1,6 @@
-export class Menu {
+class Menu {
 
-  async render( solidUI, json,element ){
+  async render( json,element ){
     if(typeof json==='string'){
       json = await solidUI.processComponent(element,json);
     }
@@ -11,7 +11,6 @@ export class Menu {
     nav.style.background=json.unselBackground;
     nav.style.color=json.unselColor;
     nav.style.paddingLeft="1em";
-    nav.style.paddingRight="1em";
     topUL.style.width="100%";
     mainDisplay.style.width="100%";
     mainDisplay.style.backgroundColor = json.background;
@@ -20,22 +19,18 @@ export class Menu {
     mainDisplay.classList.add('main');
     nav.appendChild(topUL)
     for(var i of json.parts){
-      topUL.appendChild( await this.renderMenuItem(i,json,mainDisplay) )
+      topUL.appendChild( this.renderMenuItem(i,json,mainDisplay) )
     }
     const wrapper = solidUI.createElement('SPAN');
     nav.style.display="inline-block";
-    nav.style.textAlign=json.position;
-    topUL.style.textAlign=json.position;
+    nav.style.textAlign=json.orientation;
+    topUL.style.textAlign="left";
     wrapper.appendChild(nav);
     wrapper.appendChild(mainDisplay);
     return(wrapper);
   }
 
-  async renderMenuItem(i,json,mainDisplay){
-    if(i.menu && i.menu.type && i.menu.type === "SparqlQuery"){
-      let menu = await solidUI.processComponent(null,null,i.menu);
-      if(typeof menu==="object") i.parts = menu
-    }
+  renderMenuItem(i,json,mainDisplay){
     const li = document.createElement('LI')
     const sp =  document.createElement('SPAN')
     sp.innerHTML = i.label
@@ -53,14 +48,12 @@ export class Menu {
       li.style.color = json.unselColor;
     } 
     if(!i.parts){
-i.target=json.target;
       /*
        *  <li class="item"><span>${i.label}</span></li>
        */
       li.classList.add('item')
       const self = this
-      li.addEventListener('click',(e)=>{
-//console.log(i.type,json.type);
+      li.addEventListener('click',e=>{
         displayLink(e,i,mainDisplay)
       })
     }
@@ -77,8 +70,7 @@ i.target=json.target;
       li.appendChild(ul2)
       ul2.classList.add('nested')     
       for(var m in i.parts){
-        i.parts[m].target=json.target;
-        ul2.appendChild( await this.renderMenuItem(i.parts[m],json,mainDisplay) )
+        ul2.appendChild( this.renderMenuItem(i.parts[m],json,mainDisplay) )
       }
     }
     return li

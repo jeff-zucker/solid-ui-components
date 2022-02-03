@@ -1,7 +1,7 @@
 <!DOCTYPE html><html><head>
   <meta content="text/html; charset=UTF-8" http-equiv="content-type">
-  <link rel="stylesheet" href="./src/view/modalButton.css">
-  <link rel="stylesheet" href="./src/view/menu-dropdown.css">
+  <link rel="stylesheet" href="./src/modalButton.css">
+  <link rel="stylesheet" href="./src/menu-dropdown.css">
   <script src="https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1.11.2/dist/solid-client-authn.bundle.js">
   </script>
   <meta http-equiv="Access-Control-Allow-Origin" content="*">
@@ -10,6 +10,10 @@
     var session = iscan.getDefaultSession();
     window.SolidFetch = window.SolidFetcher = async (u,o)=>{return session.fetch(u,o);}
   </script>  
+  <script src="https://solidcommunity.net/mashlib.js"></script>
+  <script src="./src/menu.js"></script>
+  <script src="./src/solid-ui-components.js"></script>
+  <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
   <style>
     pre {font-size:small;}
     body {padding:1em;}
@@ -37,7 +41,6 @@ selBackground/selColor       // selected tabs/menu-items
     ) .</script></pre>
 <td data-solid_ui_component="inline:app.ttl#MyApp"></td>
 -->  
-
 
 <tr>
     <td><h3>Form</h3>
@@ -175,12 +178,15 @@ ui:parts (
     </tr>
   </table>
 </body>
-  <script src="https://solidcommunity.net/mashlib.js"></script>
-  <script src="./src/user.js"></script>
-  <script src="./src/index.js" type="module"></script>
-  <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
-  <script type="module">
-    import solidUI from './src/index.js';
-    solidUI.init();
-  </script>
+  <script>solidUI.init();</script>
 </html>
+<!--
+    <td><h3></h3>
+      <pre><script id="inline:.ttl" type="text/turtle" style="display:block">
+@prefix ui: <http://www.w3.org/ns/ui#> .
+<#MyTable>
+          </script></pre>
+    </td>
+    <td data-solid_ui_component="inline:table.ttl#MyTable"></td>
+  </tr>
+-->  

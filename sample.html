@@ -1,5 +1,8 @@
 <!DOCTYPE html><html><head>
   <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <script src="https://solidcommunity.net/mashlib.js"></script>
+  <script src="https://jeff-zucker.solidcommunity.net/sp/src/solid-ui-components.js"></script>
+  <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
 </head><body>
 
   <div data-solid_ui_component="inline:sample.ttl#MyTable"></div>
@@ -18,12 +21,6 @@
         """
       ] .
   </script>
-  <script src="https://solidcommunity.net/mashlib.js"></script>
-  <script src="./src/user.js"></script>
-  <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
-  <script type="module">
-    import solidUI from './src/index.js';
-    solidUI.init();
-  </script>
+  <script>solidUI.init();</script>
 
 </body></html>
