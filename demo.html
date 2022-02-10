@@ -1,7 +1,7 @@
 <!DOCTYPE html><html><head>
   <meta content="text/html; charset=UTF-8" http-equiv="content-type">
-  <link rel="stylesheet" href="./src/view/modalButton.css">
-  <link rel="stylesheet" href="./src/view/menu-dropdown.css">
+  <link rel="stylesheet" href="./src/view/assets/modalButton.css">
+  <link rel="stylesheet" href="./src/view/assets/menu-dropdown.css">
   <script src="https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1.11.2/dist/solid-client-authn.bundle.js">
   </script>
   <meta http-equiv="Access-Control-Allow-Origin" content="*">
@@ -176,11 +176,14 @@ ui:parts (
   </table>
 </body>
   <script src="https://solidcommunity.net/mashlib.js"></script>
+<!--
   <script src="./src/user.js"></script>
   <script src="./src/index.js" type="module"></script>
+-->
+  <script src="./dist/solid-ui-components.bundle.js" type="module"></script>
   <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
   <script type="module">
-    import solidUI from './src/index.js';
+    // import solidUI from './src/index.js';
     solidUI.init();
   </script>
 </html>

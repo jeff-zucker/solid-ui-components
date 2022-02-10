@@ -2,6 +2,7 @@ export class Tabs {
   async render(solidUI,json) {
     const parts = json.parts
     const tabs = solidUI.createElement('DIV','solid-uic-tabs');
+    if(json.style) tabs.style = json.style;
     const nav = solidUI.createElement('NAV');
     if(json.orientation==="vertical")
       nav.style.textAlign = "right";
@@ -23,7 +24,21 @@ export class Tabs {
       rowContent.style.padding="0.75em";
       if(json.orientation==="horizontal") rowContent.style.border="1px solid grey";  
       rowContent.style.display = "none";
+      if(row.type==="SolidOSLink"){
+        let id = `tab-${r}-outline`;
+        rowContent.innerHTML = `
+          <div class="TabulatorOutline" id="${id}-tabulator" role="main">
+            <table id="${id}"></table>
+            <div id="GlobalDashboard"></div>
+          </div>
+        `;
+        let subject = window.kb.sym(row.href);
+        let targetArea = rowContent.querySelector('#'+id);
+        targetArea.style="display:table-row;background-color:c0c0c0"
+        window.outliner.GotoSubject(subject,true,undefined,true,undefined,targetArea);
+      }
       rowhead.onclick = (e)=>{
+        e.preventDefault();
         let items = tabs.querySelector('DIV').children;
         for(let i of items) {
           i.style.display="none";
@@ -57,6 +72,24 @@ export class Tabs {
     }
   }
     tabs.appendChild(nav);
+      const closeButton = document.createElement('SPAN');
+      closeButton.style = `
+        color:red;
+        text-align:right;
+        position:absolute;
+        top:0.25rem;
+        right:0.25rem;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor:pointer
+      `;
+      closeButton.addEventListener('click',(e)=>{
+        e.preventDefault();
+        e.target.parentElement.style.display="none";
+      });
+      closeButton.innerHTML = "&times";
+
+    tabs.appendChild(closeButton);
     tabs.appendChild(mainDisplay);
     solidUI.simulateClick(tabs.querySelector('BUTTON'))
     return await solidUI.initInternal(tabs);  

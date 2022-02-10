@@ -7,12 +7,12 @@ export class Menu {
     let nav     = solidUI.createElement('NAV','solid-uic-dropdown-menu')
     let topUL   = document.createElement('UL')
     let mainDisplay = document.createElement('DIV')
-    nav.style.width="100%";
+//    nav.style.width="100%";
     nav.style.background=json.unselBackground;
     nav.style.color=json.unselColor;
-    nav.style.paddingLeft="1em";
-    nav.style.paddingRight="1em";
-    topUL.style.width="100%";
+//    nav.style.paddingLeft="1rem";
+//    nav.style.paddingRight="1em";
+//    topUL.style.width="100%";
     mainDisplay.style.width="100%";
     mainDisplay.style.backgroundColor = json.background;
     mainDisplay.style.color = json.color;
@@ -52,16 +52,15 @@ export class Menu {
       li.style.backgroundColor = json.unselBackground;
       li.style.color = json.unselColor;
     } 
-    if(!i.parts){
-i.target=json.target;
+    if(i.popout || !i.parts){
+// i.target=json.target;
       /*
        *  <li class="item"><span>${i.label}</span></li>
        */
       li.classList.add('item')
       const self = this
       li.addEventListener('click',(e)=>{
-//console.log(i.type,json.type);
-        displayLink(e,i,mainDisplay)
+        window.displayLink(e,i,mainDisplay)
       })
     }
     else {
@@ -77,8 +76,9 @@ i.target=json.target;
       li.appendChild(ul2)
       ul2.classList.add('nested')     
       for(var m in i.parts){
-        i.parts[m].target=json.target;
-        ul2.appendChild( await this.renderMenuItem(i.parts[m],json,mainDisplay) )
+        let newItem = i.parts[m]
+        if(typeof newItem==='object') newItem.target=json.target;
+        ul2.appendChild( await this.renderMenuItem(newItem,json,mainDisplay) )
       }
     }
     return li

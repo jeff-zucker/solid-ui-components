@@ -1,27 +1,24 @@
 export class Sparql {
 
-  async rdflibQuery(kb,endpoint,queryString){
-    await this.loadUnlessLoaded(endpoint);
-    return new Promise(async (resolve,reject)=>{
-      try {
-        const preparedQuery=await $rdf.SPARQLToQuery(queryString,false,kb);
-        let wanted = preparedQuery.vars.map( stm=>stm.label );
-        let table = [];
-        kb.query(preparedQuery, (results)=>{
-          let row = {};
-          for(let r in results){
-            let rmunged = r.replace(/^\?/,'');
-            if( wanted.includes(rmunged) ){
-              row[rmunged] = results[r].value;
-            }
-          }
-          table.push(row);
-          table = table.sort((a,b)=>a.label > b.label ?1 :-1);
-          resolve(table)
-        })
+  async rdflibQuery(solidUI,kb,endpoint,queryString,json){
+    await solidUI.loadUnlessLoaded(endpoint);
+    try {
+      const preparedQuery=await $rdf.SPARQLToQuery(queryString,false,kb);
+      let wanted = preparedQuery.vars.map( stm=>stm.label );
+      let table = [];
+      let results = kb.querySync(preparedQuery);
+      for(let r of results){
+        let row = {};
+        for(let w of wanted){
+          let value = r['?'+w];
+          row[w] = value ?value.value :"";
+        }
+        table.push(row);
       }
-      catch(e) { console.log(e); resolve() }
-    })
+      table = table.sort((a,b)=>a.label > b.label ?1 :-1);
+      return table
+    }
+    catch(e) { console.log(e); }
   }
 
   async  comunicaQuery(endpoint,sparqlStr){

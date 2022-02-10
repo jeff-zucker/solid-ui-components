@@ -1,25 +1,33 @@
+import * as user from  './user.js';
+import {createLoginBox,applyProfile} from  './databrowser.js';
 // DataSources
 import {Feed} from './model/rss.js';
 import {Sparql} from './model/sparql.js';
 // Templates
-import {App} from './view/app.js';
 import {Accordion} from './view/accordion.js';
+import {App} from './view/app.js';
 import {Form} from './view/form.js';
-import {Modal} from './view/modal.js';
-import {Tabs} from './view/tabs.js';
-import {Table} from './view/table.js';
 import {Menu} from './view/menu.js';
-const sparql = new Sparql();
+import {Modal} from './view/modal.js';
+import {SelectorPanel} from './view/selectorPanel.js';
+import {Table} from './view/table.js';
+import {Tabs} from './view/tabs.js';
 
+
+const sparql = new Sparql();
 const proxy = "https://solidcommunity.net/proxy?uri=";
 const $rdf = panes.UI.rdf;
-const kb = panes.UI.store;
+const kb = window.kb = $rdf.graph();
+window.outliner = panes.getOutliner(document);
 let fetcher;
 const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
 const ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
 const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 
 class SolidUIcomponent {
+
+  constructor(){
+  }
 
   async init(){
     // fetcher = this.makeLSfetcher(UI); // see drafts/in-browser-fetcher.js
@@ -56,11 +64,11 @@ class SolidUIcomponent {
     if(dataSource && dataSource.type==='SparqlQuery') {
       let endpoint = dataSource.endpoint;
       let query = dataSource.query;
-      json.parts = await this.sparqlQuery(endpoint,query);
+      json.parts = await this.sparqlQuery(endpoint,query,json);
       if(json.type==='SparqlQuery') return json.parts;
     }
     if(json.type==='SparqlQuery') {
-      json.parts = await this.sparqlQuery(json.endpoint,json.query);
+      json.parts = await this.sparqlQuery(json.endpoint,json.query,json);
       if(json.type==='SparqlQuery') return json.parts;
     }
     if(json.type==='AnchorList') {
@@ -77,7 +85,7 @@ class SolidUIcomponent {
       return await (new App()).render(this,json);
     }
     else if(json.type && json.type.match(/Link/)){
-      return await displayLink(element,json,element);
+      return await window.displayLink(element,json,element);
     }
     else if(json.type==='Menu'){
       return await (new Menu()).render(this,json,element);
@@ -225,11 +233,11 @@ this.log('Parts for Component',results);
 /*-----------
   SPARQL
 ----------*/
-  async sparqlQuery(endpoint,queryString){
+  async sparqlQuery(endpoint,queryString,json){
     if(typeof Comunica !="undefined")
-      return await sparql.comunicaQuery(endpoint,queryString);
+      return await sparql.comunicaQuery(endpoint,queryString,json);
     else   
-      return await sparql.rdflibQuery(kb,endpoint,queryString);  
+      return await sparql.rdflibQuery(solidUI,kb,endpoint,queryString,json);  
   }
 
 
@@ -250,6 +258,7 @@ getDefaults(json){
   json.unselColor ||= this.unselColor || "#000";
   json.orientation ||= this.orientation || "horizontal";
   json.position ||= this.position || "left";
+  this.proxy = json.proxy
   return(json);
 }
 setDefaults(json){
@@ -262,6 +271,7 @@ setDefaults(json){
   this.unselColor = json.unselColor;
   this.orientation = json.orientation;
   this.position = json.position
+  this.proxy = json.proxy
   return(this.getDefaults(json));
 }
 
@@ -269,7 +279,7 @@ setDefaults(json){
     function fillOneTemplateRow(templateStr,object){
       for(let o of Object.keys(object) ){
         let newStuff=object[o]||" ";
-        if(typeof newStuff==='object') newStuff = newStuff.join(", ");
+        if(typeof newStuff==='object' && newStuff.length>1) newStuff = newStuff.join(", ");
         let re = new RegExp( `\\$\\{${o}\\}`, 'gi' );
         templateStr  = templateStr.replace( re, newStuff );
       }
@@ -381,4 +391,5 @@ setDefaults(json){
 } // END OF CLASS SolidUIcomponent
 
 const solidUI = new SolidUIcomponent();
+document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
 export default solidUI;

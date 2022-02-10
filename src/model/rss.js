@@ -5,7 +5,8 @@ export class Feed {
     // fetch feed URI & parse into a Dom structure
     //
     feedUri = encodeURI( feedUri );
-//    let response = await fetch( solidUI.proxy + feedUri )
+    feedUri = (solidUI.proxy||"") + feedUri;
+
     let response = await fetch( feedUri )
     let feedContent = await response.text();
     const domParser = new window.DOMParser();

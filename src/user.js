@@ -13,12 +13,10 @@
     displayArea.contentWindow.document.body.innerHTML = "";
     displayArea.contentWindow.document.body.appendChild(contentElement);
   }
-
-
-  function  openModal(element,action){
+  window.openModal = function (element,action){
     element.parentElement.children[1].style.display = "block" ;
   }
-  function  closeModal(element,action){
+  window.closeModal = function (element,action){
     element.parentElement.parentElement.style.display = "none" ;
   }
   function showByClass(event){
@@ -63,23 +61,58 @@
       }  
     } 
   }
-  async function displayLink( e, item, element ){
+  window.displayLink = async function( e, item, element ){
     if(typeof item==='string') item = { href:item }
     item.href = item.href || item.link;
     item.type = item.type || 'Link';
     item.type = item.type.replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
+
+    // IF POPOUT, DISPLAY IN ITS OWN OVERLAY AND RETURN
+    if(item.popout) {
+      let newElement = await solidUI.processComponent('',item.href)
+      newElement.style.display="block";
+      document.body.appendChild(newElement);
+      return newElement;
+    }
+
+    // IF SOLIDOS LINK, DISPLAY WITH GOTOSUBJECT, RETURN
+    if(item.type === "SolidOSLink") {
+      const targetElement = document.getElementById('suicTabulator')
+      targetElement.style.display="block";
+      document.getElementById('mainMain').style.display="none";
+       window.outliner.GotoSubject(window.kb.sym(item.href),true,undefined,true);
+      return;
+    }
+
+    // IF SOLIDOS PANE, DISPLAY WITH GOTOSUBJECT, RETURN
+    if(item.type === "SolidOSPane") {
+      const targetElement = document.getElementById('suicTabulator')
+      targetElement.style.display="block";
+      document.getElementById('mainMain').style.display="none";
+      var subject = panes.UI.rdf.sym(item.href);
+      var wantedPane = panes.byName(item.pane);
+      outliner.GotoSubject(subject,true,wantedPane,true,null,targetElement);
+      return;
+    }
+
+    // FIND CONTAINING ELEMENT
     let containingEl;
-    let target = e ?e.target:null;
-    if(element && !target){
+    if(element && !e){
       containingEl = element;
     }
-    else if(target) {
-      const wrapper = target.closest('.solid-ui-component') || target.closest('.solid-ui-app') ;
-      if(wrapper) containingEl = wrapper.querySelector('main');
+    // let wrapper =e.target.closest('.solid-ui-component')
+    let wrapper = e && e.target ?e.target.closest('.solid-uic-app') :null;
+    if(wrapper && wrapper.classList.contains('solid-main-app')) {
+      containingEl = wrapper.querySelector('#mainMain');
+    }
+    else if(wrapper) {
+      containingEl = wrapper.querySelector('.main');
     } 
-    containingEl ||= document.body.querySelector('.main');
-//    if(containingEl)  containingEl.innerHTML = `<body><img src="./bookloadergif" style="margin:100px;height:100px;"></body>`;
-if(containingEl) containingEl.innerHTML="";
+    document.getElementById('mainMain').style.display="block";
+    document.getElementById('suicTabulator').style.display="none";
+    containingEl=containingEl||document.body.querySelector('.main')||document.body;
+    if(containingEl) containingEl.innerHTML="";
+
     let content = item.content;
     if(content){
       let span = document.createElement('SPAN')
@@ -87,10 +120,14 @@ if(containingEl) containingEl.innerHTML="";
       span = mungeAnchors(span);
       containingEl.innerHTML=""
       containingEl.appendChild(span);
-      return containingEl;
+      return await solidUI.initInternal(containingEl);  
+    }
+    // SolidOsLink
+    if(item.type==="SolidOSLink") {
+        return;
     }
     // FEED 
-    if(item.type==="Feed") {
+    if(item.type==="Feed"||item.linkType==="Feed") {
       let newItem = {
         type:"App",
         orientation:"vertical",
@@ -120,7 +157,7 @@ if(containingEl) containingEl.innerHTML="";
         return(content);
       }
       else if(item.href){
-        let content = await getIframe(item.href,containingEl,item.nativeIframe);
+        let content = await getIframe(item,containingEl,item.nativeIframe);
 //        containingEl.innerHTML=""
         containingEl.appendChild(content);
         return containingEl;
@@ -158,7 +195,7 @@ if(containingEl) containingEl.innerHTML="";
         event.preventDefault();
         let display = event.target.closest('.solid-uic-app')
         display = display.querySelector('.main');
-        let href = event.target.href || event.target.parentElement.href
+       let href = event.target.href || event.target.parentElement.href
         displayLink(null,{href,needsIframe:true},display);
       });
       if(noStyle) continue;
@@ -166,8 +203,8 @@ if(containingEl) containingEl.innerHTML="";
     }
     return element;
   }
-
-  async function getIframe(uri,containingEl,nativeIframe){
+  async function getIframe(item,containingEl,nativeIframe){
+    let uri = item.href;
     const iframe = document.createElement("IFRAME");
     iframe.style="width:100%;height:90vh;border:none;margin:0;padding:0;";
     iframe.src = "";
@@ -179,7 +216,7 @@ if(containingEl) containingEl.innerHTML="";
         let content = await fetch(uri);
         if(content){
           content = await content.text()
-        if(!content.match(/^\s*</)) return await goto(uri,containingEl);
+//        if(!content.match(/^\s*</)) return await goto(uri,containingEl);
           containingEl.innerHTML="";
           uri = uri.replace(/^.*proxy\?uri=/,'');
           uri = new URL(uri);
@@ -202,4 +239,16 @@ if(containingEl) containingEl.innerHTML="";
     var subject = kb.sym(uri);
     const pane = panes.byName('dataContents');
     outliner.GotoSubject(subject, true, pane, true, undefined);
+  }
+
+  function gotoPane(uri,paneName,targetElement){
+    var subject = panes.UI.rdf.sym(uri);
+    var wantedPane = panes.byName(paneName);
+    outliner.GotoSubject(subject,true,wantedPane,true,null,targetElement);
+  }
+
+  function renderSolidOSpage(item){
+     const targetElement = document.getElementById('suicTabulator')
+     targetElement.style.display="block";
+     window.outliner.GotoSubject(window.kb.sym(item.href),true,undefined,true);
   }

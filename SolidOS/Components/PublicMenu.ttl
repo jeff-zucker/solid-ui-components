@@ -1,0 +1,44 @@
+
+@prefix : <#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
+@prefix TBD: <> .
+
+<#PublicMenu>
+  a ui:Menu ;
+  ui:parts ( :Home :PublicDocuments :ViewProfile :ContactMenu ) .
+
+<#ContactMenu>
+  a ui:Menu ;
+  ui:label "Contact Me" ;
+  ui:parts ( :ChatWithMe :MessageMe :FriendMe ) .
+
+<#Home>
+  a ui:Link;
+  ui:label "Home";
+  ui:href <home.html> .
+                              
+<#PublicDocuments>
+  a ui:SolidOSLink;
+  ui:label "Documents";
+  ui:href </public/> .        
+
+<#ViewProfile>
+  a ui:SolidOSLink;
+  ui:label "Profile";
+  ui:href </profile/card#me> .   
+
+<#ChatWithMe>                                                                          
+  a ui:SolidOSLink;                                                                    
+  ui:label "Chat with me";                                                             
+  ui:href TBD: .  
+                 
+<#MessageMe>                                                                             
+  a ui:SolidOSLink;                                                                    
+  ui:label "Leave me a message";                                                       
+  ui:href </inbox/> .                   
+
+<#FriendMe>                                                                              
+  a ui:SolidOSLink;                                                                    
+  ui:label "Add me to your friend list";                                               
+  ui:href TBD: .   
+ 

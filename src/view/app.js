@@ -1,29 +1,52 @@
+import {createLoginBox,applyProfile} from '../databrowser.js';
+
 export class App {
   async render(solidUI,app){
 
     // GET/SET DEFAULTS
     //
     app = solidUI.setDefaults(app);
-    document.body.style.overflow="hidden";
+    if(app.fullPage){
+      window.addEventListener('resize',()=>{
+      });
+      document.body.style.overflow="hidden";
+    }
 
 
-    // SET BODY HEIGHT TO FULL MINUS HEADER + MENU 
-    app.headerHeight = this.rem2vh(3);
-    app.menuHeight = this.rem2vh(2);
-    app.mainHeight = ( 100 - (app.headerHeight+app.menuHeight) ).toString() + "vh" ;
-    app.headerHeight = (app.headerHeight).toString() + "vh" ;
-    app.menuHeight = (app.menuHeight).toString() + "vh" ;
+    // FIND NUMBER OF PIXELS IN 1 REM - VARIES WITH BROWSER/USER SETTINGS
+    function rem2px(){
+      let el = document.createElement('DIV');
+      el.style="height:1rem";
+      document.body.appendChild(el);
+      let remSize = el.clientHeight;
+      document.body.removeChild(el);
+      return(remSize);
+    }
+    // SET BODY HEIGHT TO WINDOW HIEGHT MINUS HEADER + MENU 
+    function mainHeight(app){
+      let rem = rem2px();
+      app.menuHeight = 2*rem;
+
+      app.headerHeight = 6*rem;
+      app.mainHeight = ( window.innerHeight-app.headerHeight )
+      window.SolidAppContext = { scroll : app.headerHeight }
+
+      app.headerHeight = app.headerHeight.toString()+'px';
+      app.mainHeight = app.mainHeight.toString()+'px';
+      return app;
+    }
+    app = mainHeight(app);
 
     // DISPLAY HEADER IF app.logo OR app.title
     //
     app.logo ||= "";
     app.title ||= "";
-    app.headerHeight = ( app.logo || app.title ) ?app.headerHeight : "0";
+    app.headerHeight = ( app.logo || app.title || app.adminMenu ) ?app.headerHeight : "0";
 
     // DISPLAY MENU AT TOP OR LEFT DEPENDING ON app.orientation
     //
     app.leftMenu = "" ;
-    app.topMenu = "" ;
+    app.siteMenu = "" ;
     if(app.orientation==="horizontal"){
       app.leftMenuStyle = "display:none";
     }
@@ -38,18 +61,30 @@ export class App {
       `;
     }
 
-    let appString = this.getHTML(app);
+    let appString = await this.getHTML(app);
     let element = solidUI.createElement('SPAN','',appString);
-    if(typeof app.menu==='object')app.menu.target = element.querySelector('.main');
-    let menuElement = element.querySelector("NAV");
-    const menu = await solidUI.processComponent(menuElement,app.menu);
-    let menuSelector = app.orientation==="horizontal" ?"NAV" :".leftColumn";
-    element.querySelector(menuSelector).appendChild(menu);
+    let solidLogo = element.querySelector('#solidLogo')
+    if(solidLogo) solidLogo.src = 'https://solidproject.org/assets/img/solid-emblem.svg';
 
+//    if(typeof app.currentPodMenu==='object')app.currentPodMenu.target = element.querySelector('.main');
+    let menuElement = element.querySelector("#currentPodMenu");
+    if( app.orientation==="vertical"){
+      menuElement = element.querySelector("NAV");
+    }
+    const menu = await solidUI.processComponent(menuElement,app.currentPodMenu);
 
+    menuElement.appendChild(menu);
+    const main = element.querySelector('.main')
+
+    if(app.userMenu) {
+      const amenu = await solidUI.processComponent(menuElement,app.userMenu);
+      element.querySelector('#userMenu').appendChild(amenu);
+    }
     if(app.initialContent) {
 //      main.appendChild(await solidUI.processComponent('',app.initialContent));
     }  
+    if(app.loginBox) await createLoginBox(element);
+    await applyProfile(element); // munge site menu
     return element;
   }
 rem2vw(rem) {
@@ -62,17 +97,17 @@ rem2vh(rem) {
   const pxPerVw = 100/viewportWithoutScroll;
   return( rem * 16 * pxPerVw);  
 }
-  getHTML(app){ 
+  async getHTML(app){ 
      app.leftColumnColumnStyle ||= "display:none";
      app.leftColumnColumnMenu ||= "";
-     app.topMenu ||= "";
+     app.siteMenu ||= "";
      app.leftColumnColumnStyle ||= "";
      app.iframeSrc ||= "";
      app.iframeContent ||= "";
      app.logoStyle = `
              height: 3rem;
             display: inline-block;
-       padding-left: 1rem;
+       padding-left: 0.5rem;
      `;
      app.titleStyle = `
        display:inline-block;
@@ -81,19 +116,175 @@ rem2vh(rem) {
        padding-top: 0.4rem;
        padding-left:1rem;"
      `;
+     app.appStye = `
+              display: flex;
+       flex-direction: column;
+                width: 100%;
+               height: 100%;
+     `;
+      app.mainStyle = `
+        padding:0rem;
+        width:100%;
+        overflow:scroll;
+        position:absolute;
+        top:${app.headerHeight} !important;
+        left:0;
+        height:${app.mainHeight};
+     `;
+     if(app.theme) {
+        try {      
+//          let response = await panes.UI.store.fetcher.webOperation('GET',app.theme);
+          let response = await window.fetch(app.theme);
+          let content = await response.text();
+          content = solidUI.fillTemplate(content,[app]);
+          return await content;
+        }
+        catch(e){console.log(e)}
+     }
      return `
-<div class="solid-uic-app" style="display:flex;flex-direction:column;width:100;height:100%;">
-  <header style="height:${app.headerHeight};">
-    <img src="${app.logo}" style="${app.logoStyle}" />
-    <span style="${app.titleStyle}"> ${app.title} </span>
-  </header>
-  <nav style="width:100%">
-    ${app.topMenu}
-  </nav>
-  <div style="display:flex;flex-direction:row;width:100%;height:100%">
-    <div class="leftColumn" style="${app.leftMenuStyle}">${app.leftMenu}</div>
-    <div class="main" style="padding:0rem;overflow:hidden;width:100%;height:${app.mainHeight};"></div>
-  </div>
-</div>`;
+<!--APP-->
+<div class="solid-uic-app solid-main-app">
+
+    <!--BANNER-->
+    <div class="app-banner">
+
+        <!--USER IMAGE & NAME-->  
+        <img id="currentPodLogo" src="">
+        <div id="currentPodTitle"></div>
+
+
+        <!--ADMIN MENU, LOGIN, SOLID LOGO-->
+        <div style="background:${app.unselBackground};text-align:center;position:absolute;top:0.5rem;right:7rem;"><span id="adminMenu" style="white-space: nowrap;"></span> </div>
+        <div id="loginArea"></div>
+        <img src="${app.logo}" style="height:7rem;position:absolute;top:-0.5rem;right:-0.5rem">
+
+        <!--PUBLIC MENU-->
+        <div id="currentPodMenu" style="white-space:nowrap;position:absolute;top:3rem;left:7.4rem;">${app.siteMenu}</div>
+
+    </div><!--BANNER-->
+
+    <!--MAIN WRAPPER-->
+<!--    <div style="display:flex;flex-direction:row;width:100%;height:100%;"> -->
+    <div style="width:100%;height:100%;min-height:0;">
+
+        <!-- LEFT COLUMN MENU (IF EXISTS) -->
+        <div class="leftColumn" style="${app.leftMenuStyle}">${app.leftMenu}</div>
+
+        <!--MAIN MAIN-->
+        <div id="mainMain" style="min-height:0;${app.mainStyle}"></div>
+
+        <!--MAIN TABULATOR-->
+            <div class="TabulatorOutline" role="main" id="suicTabulator" style="${app.mainStyle}">
+                <table id="outline"></table>
+                <div id="GlobalDashboard"></div>
+            </div>
+
+    </div><!--MAIN WRAPPER-->
+
+</div><!--APP-->
+<style>
+  #suicTabulator{
+    top:${app.headerHeight} !important;
+    overflow:scroll !important;
+    min-height: 0; 
+  }
+  #suicTabulator table {
+    background:#7e7e7e !important;
+    color:white !important;
+  }
+  .solid-main-app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+  .solid-main-app .app-banner {
+     width:100%;
+     display:flex;
+     background:${app.unselBackground};
+     color:black;
+  }
+  .solid-main-app input[type="button"]:hover {
+    background:${app.selBackground};
+    color:${app.selColor};
+  }
+  .solid-main-app #currentPodTitle {
+    left:8rem;
+    font-size:1.3rem;
+    position:absolute;
+    top:1rem;
+  }
+  .solid-main-app #currentPodLogo {
+    height:${app.headerHeight}
+  }
+</style>
+
+    `;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
