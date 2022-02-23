@@ -30,6 +30,7 @@ class SolidUIcomponent {
   }
 
   async init(){
+
     // fetcher = this.makeLSfetcher(UI); // see drafts/in-browser-fetcher.js
     const all = document.querySelectorAll('[data-solid_ui_component]')
     for(let element of all) {
@@ -59,6 +60,10 @@ class SolidUIcomponent {
     // default color,orientation,position
     json = this.getDefaults(json);
 
+//    if(json.type.match(/Link/)){
+//      return displayLink(json)
+//    }
+
     // DATASOURCE
     let dataSource = typeof json.dataSource==="string" ?await this.getComponentHash(json.dataSource) : json.dataSource ;
     if(dataSource && dataSource.type==='SparqlQuery') {
@@ -80,7 +85,6 @@ class SolidUIcomponent {
       json.parts = sparql.flatten(json.parts,json.groupOn)
       console.log(json.groupOn,json.parts)
     }
-    if(json.type!="Component") this.log(`Parts for ${json.type} `,json.parts);
     if(json.type==='App'){
       return await (new App()).render(this,json);
     }
@@ -186,12 +190,13 @@ this.log('Parts for Component',results);
       return contentWrapper ;
     
   }
-
-
   async getComponentHash(subject,hash){
     subject = await this.loadUnlessLoaded(subject);
     if(!subject) return null;
-    let predicatePhrases = kb.match(subject);
+    let predicatePhrases = kb.match(subject,null,null);
+    if(subject.doc){
+      let thisdoc = kb.match(null,null,null,subject.doc())
+    }
     hash = hash || {}
     for(let p of predicatePhrases){
       let pred = p.predicate.value.replace(/http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#/,'').replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
@@ -301,6 +306,9 @@ setDefaults(json){
 
   /* UTILITIES
   */
+
+  diff(diffMe, diffBy){ diffMe.split(diffBy).join('') }
+
   simulateClick(el){
     if (el.fireEvent) {
       el.fireEvent('on' + 'click');
@@ -369,9 +377,11 @@ setDefaults(json){
         console.log("loading "+graph.uri+" ...");
         fetcher = fetcher || $rdf.fetcher(kb);
         let r = await fetcher.load(graph.uri);
-        if(kb.any(null,null,null,graph)) console.log("Resource loaded!");
+        if(kb.any(null,null,null,graph)) console.log(`<${graph.uri}> loaded!`);
+        else console.log(`<${graph.uri}> could not be loaded!`);
+//console.log(kb.match(null,null,null,graph));
       }
-      //else console.log(uri," already loaded!");
+      else console.log(`<${graph.uri}> already loaded!`);
       return $rdf.sym(uri);
     }
     catch(e) { console.log(e); return null }

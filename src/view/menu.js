@@ -58,10 +58,18 @@ export class Menu {
        *  <li class="item"><span>${i.label}</span></li>
        */
       li.classList.add('item')
+      li.name = i.href
       const self = this
+/*
       li.addEventListener('click',(e)=>{
         window.displayLink(e,i,mainDisplay)
       })
+We can't easily override the eventListener later so use onclick instead.
+*/
+      li.onclick = (e)=>{
+        i.href = e.target.parentElement.name;
+        window.displayLink(e,i,mainDisplay)
+      }
     }
     else {
       /*

@@ -8,10 +8,14 @@ export class App {
     app = solidUI.setDefaults(app);
     if(app.fullPage){
       window.addEventListener('resize',()=>{
+         app = mainHeight(app);
+         let mm = document.getElementById('mainMain')
+         let tab = document.getElementById('suicTabulator')
+         if(mm) mm.style.height = app.mainHeight;
+         if(tab) tab.style.height = app.mainHeight;
       });
       document.body.style.overflow="hidden";
     }
-
 
     // FIND NUMBER OF PIXELS IN 1 REM - VARIES WITH BROWSER/USER SETTINGS
     function rem2px(){
@@ -26,11 +30,9 @@ export class App {
     function mainHeight(app){
       let rem = rem2px();
       app.menuHeight = 2*rem;
-
+      window.SolidAppContext = { scroll : app.headerHeight }
       app.headerHeight = 6*rem;
       app.mainHeight = ( window.innerHeight-app.headerHeight )
-      window.SolidAppContext = { scroll : app.headerHeight }
-
       app.headerHeight = app.headerHeight.toString()+'px';
       app.mainHeight = app.mainHeight.toString()+'px';
       return app;
@@ -72,19 +74,20 @@ export class App {
       menuElement = element.querySelector("NAV");
     }
     const menu = await solidUI.processComponent(menuElement,app.currentPodMenu);
-
-    menuElement.appendChild(menu);
-    const main = element.querySelector('.main')
-
+    if(menuElement) menuElement.appendChild(menu);
     if(app.userMenu) {
       const amenu = await solidUI.processComponent(menuElement,app.userMenu);
-      element.querySelector('#userMenu').appendChild(amenu);
+      let umenu = element.querySelector('#userMenu')
+      if( umenu) umenu.appendChild(amenu);
     }
-    if(app.initialContent) {
-//      main.appendChild(await solidUI.processComponent('',app.initialContent));
-    }  
     if(app.loginBox) await createLoginBox(element);
     await applyProfile(element); // munge site menu
+    if(app.initialContent) {
+      let content = await solidUI.getComponentHash(app.initialContent);
+      content = content.content.interpolate(solidUI.vars)
+      let main = element.querySelector('#mainMain');
+      if(main) main.innerHTML = content;
+    }
     return element;
   }
 rem2vw(rem) {

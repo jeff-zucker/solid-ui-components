@@ -44,7 +44,8 @@ button.selected, button:hover {
 .solid-uic-dropdown-menu li > span:only-child:after { content: ''; }
 
 .solid-uic-dropdown-menu li > span {
-  margin-right:0.75rem;
+  margin-right:0.5rem;
+  margin-left:0.5rem;
 }
 .solid-uic-dropdown-menu ul li:hover > ul {
   display:block;
@@ -54,6 +55,7 @@ button.selected, button:hover {
   float:none;
   display:list-item;
   position: relative;
+  text-align:center;
   z-index:10000;
 }
 .solid-uic-dropdown-menu ul ul ul li {

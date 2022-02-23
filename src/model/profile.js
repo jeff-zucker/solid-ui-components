@@ -22,16 +22,16 @@ export async function loadProfile(webId) {
   }
   let me = {
     webId,
-    name  : getObject(kb,webId,FOAF('name')) || getObject(kb,webId,VCARD('fn')),
-    nick  : getObject(kb,webId,FOAF('nick')),
-    image : getObject(kb,webId,VCARD('hasPhoto')),
-    inbox : getObject(kb,webId,LDP('inbox')),
-    preferences : getObject(kb,webId,PIM('preferencesFile')),
-    privateTypeIndex : getObject(kb,webId,SOLID('privateTypeIndex')),
-    publicTypeIndex : getObject(kb,webId,SOLID('publicTypeIndex')),
-    storages : getObjects(kb,webId,PIM('storage')),
-    issuers : getObjects(kb,webId,SOLID('oidcIssuer')),
-  };
+    name  : getObject(kb,webId,FOAF('name')) || getObject(kb,webId,VCARD('fn')) || "",
+    nick  : getObject(kb,webId,FOAF('nick')) || "",
+    image : getObject(kb,webId,VCARD('hasPhoto')) || "",
+    inbox : getObject(kb,webId,LDP('inbox')) || "",
+    preferences : getObject(kb,webId,PIM('preferencesFile')) || "",
+    privateTypeIndex : getObject(kb,webId,SOLID('privateTypeIndex')) || "",
+    publicTypeIndex : getObject(kb,webId,SOLID('publicTypeIndex')) || "",
+    storages : getObjects(kb,webId,PIM('storage')) || "",
+    issuers : getObjects(kb,webId,SOLID('oidcIssuer')) || "",
+  }
   return me; // I'm defective, get your money back ;-)
 }
 

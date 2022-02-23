@@ -1,6 +1,16 @@
+import {setHistory,applyProfile} from './databrowser.js';
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   USER CALLABLE ACTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+  // https://stackoverflow.com/a/41015840/15781258
+  //
+  String.prototype.interpolate = function(params) {
+    const names = Object.keys(params);
+    const vals = Object.values(params);
+    return new Function(...names, `return \`${this}\`;`)(...vals);
+  }
 
   async function showIframe(uri,displayArea){
     if( uri.match(/localhost/) ) {
@@ -67,6 +77,7 @@
     item.type = item.type || 'Link';
     item.type = item.type.replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
 
+
     // IF POPOUT, DISPLAY IN ITS OWN OVERLAY AND RETURN
     if(item.popout) {
       let newElement = await solidUI.processComponent('',item.href)
@@ -74,26 +85,33 @@
       document.body.appendChild(newElement);
       return newElement;
     }
+alert(1)
 
     // IF SOLIDOS LINK, DISPLAY WITH GOTOSUBJECT, RETURN
-    if(item.type === "SolidOSLink") {
+    if(item.type.startsWith("SolidOS")) {
+alert(2)
+      document.getElementById('mainMain').style.display="none";
       const targetElement = document.getElementById('suicTabulator')
       targetElement.style.display="block";
-      document.getElementById('mainMain').style.display="none";
-       window.outliner.GotoSubject(window.kb.sym(item.href),true,undefined,true);
+      let wantedPane;
+      let subject = item.href;
+      if( item.pane ) {
+         wantedPane = panes.byName(item.pane);
+      }
+      else if( item.pod ) {
+        let me = await applyProfile(null,item.pod);
+        subject = me.storages[0];
+      }
+      subject = window.kb.sym(subject);
+      setHistory(subject.uri);
+      window.outliner.GotoSubject(subject,true,wantedPane,true,null,targetElement);
       return;
     }
 
-    // IF SOLIDOS PANE, DISPLAY WITH GOTOSUBJECT, RETURN
-    if(item.type === "SolidOSPane") {
-      const targetElement = document.getElementById('suicTabulator')
-      targetElement.style.display="block";
-      document.getElementById('mainMain').style.display="none";
-      var subject = panes.UI.rdf.sym(item.href);
-      var wantedPane = panes.byName(item.pane);
-      outliner.GotoSubject(subject,true,wantedPane,true,null,targetElement);
-      return;
-    }
+    let main = document.getElementById('mainMain')
+    let tabulator = document.getElementById('suicTabulator')
+    if(main) main.style.display="block";
+    if(tabulator) tabulator.style.display="none";
 
     // FIND CONTAINING ELEMENT
     let containingEl;
@@ -108,16 +126,14 @@
     else if(wrapper) {
       containingEl = wrapper.querySelector('.main');
     } 
-    document.getElementById('mainMain').style.display="block";
-    document.getElementById('suicTabulator').style.display="none";
     containingEl=containingEl||document.body.querySelector('.main')||document.body;
     if(containingEl) containingEl.innerHTML="";
-
     let content = item.content;
     if(content){
       let span = document.createElement('SPAN')
+      content = content.interpolate(solidUI.vars);
       span.innerHTML = content;
-      span = mungeAnchors(span);
+//      span = mungeAnchors(span);
       containingEl.innerHTML=""
       containingEl.appendChild(span);
       return await solidUI.initInternal(containingEl);  
@@ -147,7 +163,7 @@
     }
     else if(item.type==="Link") {
       if(content){
-        containingEl.innerHTML = content;
+          containingEl.innerHTML = content;
         return await this.initInternal(containingEl);  
       }
       else if(item.script){
@@ -164,10 +180,15 @@
       }
     }
     else {
-      content = await window.solidUI.processComponent('',item) ;
+      content = await solidUI.processComponent('',item) ;
       if(!item.format) content = mungeAnchors(content);
       containingEl.innerHTML=""
-      containingEl.appendChild(content);
+      if(typeof content === 'string'){
+        let div = document.createElement('DIV');
+        div.innerHTML = content;
+        containingEl.appendChild(div);
+      }
+      else containingEl.appendChild(content);
       return containingEl;
     }
   }
@@ -188,6 +209,7 @@
   }
 
   function mungeAnchors(element,noStyle){
+    if(!element) return;
     const anchors = element.querySelectorAll('A');
     for(var anchor of anchors){
       if(anchor.classList.contains('skipMunge')) continue;
