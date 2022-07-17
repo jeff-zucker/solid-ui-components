@@ -1,0 +1,147 @@
+@prefix : <#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
+@prefix schema: <http://schema.org/> .
+
+##############
+# TECH NEWS #
+##############
+
+[]
+  ui:label   "Engadget";
+  ui:href  <https://www.engadget.com/rss.xml> ;
+  a ui:Feed ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Tech News" 
+.
+[]
+  ui:label   "Hacker News";
+  ui:href  <https://news.ycombinator.com/rss> ;
+  a ui:Feed ;
+  schema:potentialAction "iframe" ;  
+  schema:about "Tech News" 
+.
+[]
+  ui:label   "The Verge";
+  ui:href  <https://www.theverge.com/rss/index.xml> ;
+  a ui:Feed ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Tech News" 
+.
+[]
+  ui:label   "Ars Technica";
+  ui:href  <https://feeds.arstechnica.com/arstechnica/index> ;
+  a ui:Feed ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Tech News" 
+.
+[]
+  ui:label   "The Next Web";
+  ui:href  <https://feeds2.feedburner.com/thenextweb> ;
+  a ui:Feed ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Tech News" 
+.
+[]
+  ui:label  "Wired" ;
+  a ui:Feed ;
+  ui:href <https://www.wired.com/feed/rss> ;
+  schema:about "Tech News" 
+.
+[]
+  ui:label  "Tech Radar" ;
+  a ui:Feed ;
+  ui:href <https://www.techradar.com/rss/news/computing> ;
+  schema:about "Tech News" 
+.
+[]
+  ui:label  "Techmeme" ;
+  a ui:Feed ;
+  ui:href <https://www.techmeme.com/feed.xml> ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Tech News" 
+.
+
+################
+# GENERAL NEWS #
+################
+
+[]
+  ui:label  "Oregon Public Broadcasting" ;
+  a ui:Feed ;
+  ui:href <https://api.opb.arcpublishing.com/feeds/rss/?website=opb> ;
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "Truthout" ;
+  a ui:Feed ;
+  ui:href <https://www.truth-out.org/feed?format=feed> ;
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "The Intercept" ;
+  a ui:Feed ;
+  ui:href <https://theintercept.com/feed/?lang=en> ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "Counterspin" ;
+  a ui:Feed ;
+  ui:href <https://fair.org/feed/> ;
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "Democracy Now" ;
+  a ui:Feed ;
+  ui:href <https://www.democracynow.org/democracynow.rss> ;
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "Informed Comment" ;
+  a ui:Feed ;
+  ui:href <https://www.juancole.com/feed/atom> ;
+  schema:about " News" 
+.
+[]
+  ui:label  "Black America Web" ;
+  a ui:Feed ;
+  ui:href <https://blackamericaweb.com/category/news/feed/> ;
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "In These Times" ;
+  a ui:Feed ;
+  ui:href <https://inthesetimes.com/rss> ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "Vox" ;
+  a ui:Feed ;
+  ui:href <https://www.vox.com/rss/index.xml> ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Progressive News" 
+.
+[]
+  ui:label  "ProPublica" ;
+  a ui:Feed ;
+  ui:href <http://feeds.propublica.org/propublica/main> ;
+  ui:needsProxy 1 ;
+  schema:potentialAction "proxy-iframe" ;  
+  schema:about "Progressive News" 
+.
+
+
+# Software Freedom Conservancy
+# https://sfconservancy.org/feeds/blog/
+
+# Hackaday
+# https://hackaday.com/blog/feed/

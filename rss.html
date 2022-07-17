@@ -1,0 +1,22 @@
+<body>
+<!--
+  function to render a list of a feed's items
+-->
+<script type="module">
+
+import * as UI from '../solidos/workspaces/mashlib/dist/mashlib.js';
+import {Feed} from './src/model/rss.js';
+
+async function render(containingElement){
+  let data = {
+    href : "https://www.sciencedaily.com/rss/fossils_ruins/cultures.xml",
+    proxy : "https://solidcommunity.net/proxy?uri=",
+    width:"20rem",
+    height:"60vh",
+  }
+  let myFeed = await (new Feed()).render(null,data);
+  containingElement.appendChild(myFeed);
+}
+render(document.body);
+
+</script>

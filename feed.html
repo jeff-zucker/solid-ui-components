@@ -1,0 +1,24 @@
+<body>
+
+  <div 
+    id = "feedMenu"
+    data-suicFeedMenu = "/s/solid-ui-components/data/news.ttl#News"
+    data-display = "#display"
+  ></div>
+  <div id="display"></div>
+
+  <script src="./node_modules/solid-ui/dist/main.js"></script>
+  <script src="./src/model/feed.js" type="module"></script>
+  <style>
+    #feedMenu { width:20vw; }
+    #display {
+      position:absolute;
+      top:0;
+      bottom:0;
+      right:0;
+      left:21.5vw;
+      background:transparent;
+    }
+  </style>
+
+</body>

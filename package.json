@@ -1,6 +1,6 @@
 {
   "name": "solid-ui-components",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "generate high level HTML UI components from RDF",
   "main": "src/index.js",
   "scripts": {
@@ -11,8 +11,15 @@
   "author": "Jeff Zucker",
   "license": "MIT",
   "devDependencies": {
+    "@babel/cli": "^7.18.6",
+    "@babel/core": "^7.18.6",
     "@babel/plugin-transform-modules-umd": "^7.12.1",
+    "babel-loader": "^8.2.5",
+    "solid-ui": "^2.4.22",
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "mime": "^3.0.0"
   }
 }

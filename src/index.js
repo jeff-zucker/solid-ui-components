@@ -1,7 +1,7 @@
 import * as user from  './user.js';
-import {createLoginBox,applyProfile} from  './databrowser.js';
 // DataSources
-import {Feed} from './model/rss.js';
+//import {Feed} from './model/rss.js';
+import {Feed} from './model/feed.js';
 import {Sparql} from './model/sparql.js';
 // Templates
 import {Accordion} from './view/accordion.js';
@@ -12,13 +12,13 @@ import {Modal} from './view/modal.js';
 import {SelectorPanel} from './view/selectorPanel.js';
 import {Table} from './view/table.js';
 import {Tabs} from './view/tabs.js';
-
+import {BookmarkTree} from './view/bookmarkTree.js';
 
 const sparql = new Sparql();
 const proxy = "https://solidcommunity.net/proxy?uri=";
-const $rdf = panes.UI.rdf;
+const $rdf = UI.rdf;
 const kb = window.kb = $rdf.graph();
-window.outliner = panes.getOutliner(document);
+if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
 let fetcher;
 const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
 const ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
@@ -29,10 +29,15 @@ class SolidUIcomponent {
   constructor(){
   }
 
+
+  // BREAKING : components marked as data-suic, not data-solid_ui_component
+  suic = "[data-suic]";
+
   async init(){
 
     // fetcher = this.makeLSfetcher(UI); // see drafts/in-browser-fetcher.js
-    const all = document.querySelectorAll('[data-solid_ui_component]')
+    let all = document.querySelectorAll(this.suic)
+//    all= all.length>0 ?all : document.querySelectorAll('[data-solid_ui_component]')
     for(let element of all) {
       const content = await this.processComponent(element);
       if(content) element.appendChild( content );
@@ -40,7 +45,8 @@ class SolidUIcomponent {
   }
 
   async initInternal(containingElement){
-    const all = containingElement.querySelectorAll('[data-solid_ui_component]')
+    let all = containingElement.querySelectorAll(this.suic)
+//    all= all.length>0 ?all : document.querySelectorAll('[data-suic]')
     for(let element of all) {
       const content = await this.processComponent(element);
       element.appendChild( content );
@@ -50,13 +56,15 @@ class SolidUIcomponent {
 
   async processComponent(element,subject,json){
     if(!json){    
-      if(!subject && element && element.dataset) subject = await this.loadUnlessLoaded(element.dataset.solid_ui_component);
+      if(!subject && element && element.dataset) subject = await this.loadUnlessLoaded(element.dataset.suic);
       if(!subject) return null;
       json = await this.getComponentHash(subject)
+      json.displayArea = element.dataset.display ;
+      json.contentArea = '#' + element.id ;
+      json.contentSource = subject.value ?subject.value :subject ;
     }
     json ||= subject;
     if(!json) {console.log("No ComponentHASH ",subject); return;}
-
     // default color,orientation,position
     json = this.getDefaults(json);
 
@@ -94,8 +102,14 @@ class SolidUIcomponent {
     else if(json.type==='Menu'){
       return await (new Menu()).render(this,json,element);
     }
-    else if(json.type==='Feed'&&(json.href||json.link)){
-      return await (new Feed()).render(this,json);
+    else if(json.type==='FeedList'){
+      return await (new Feed()).makeFeedSelector(json.contentSource,json.contentArea,json.displayArea);
+    }
+    else if(json.type==='BookmarkTree'){
+      await (new BookmarkTree()).getTopic(json.contentSource,json.contentArea,json.displayArea,'start');
+      let elm = document.querySelector(json.contentArea);
+      elm.style = "padding:0;margin:0;list-style:none;"
+      document.getElementById('ocbStart').click();
     }
     else if(json.type==='SelectorPanel'){
       let panel = new SelectorPanel();
@@ -103,7 +117,8 @@ class SolidUIcomponent {
       return await panel.render(json);
     }
     else if(json.type==='ModalButton'){
-      return await (new Modal()).render(this,json)
+      // return await (new Modal()).render(this,json)
+         return await (new Modal()).render(json,this)
     }
     else if(json.type==='Accordion'){
       return await (new Accordion()).render(this,json)
@@ -242,7 +257,8 @@ this.log('Parts for Component',results);
     if(typeof Comunica !="undefined")
       return await sparql.comunicaQuery(endpoint,queryString,json);
     else   
-      return await sparql.rdflibQuery(solidUI,kb,endpoint,queryString,json);  
+      return await sparql.rdflibQuery(endpoint,queryString,json);
+//    return await sparql.rdflibQuery(solidUI,kb,endpoint,queryString,json);  
   }
 
 
@@ -255,11 +271,11 @@ getDefaults(json){
   json.height ||= this.height;
   json.width ||= this.width;
   json.proxy ||= this.proxy || proxy;
-  json.background ||= this.background || "#fff";
+  json.background ||= this.background || "#f6f6f6";
   json.color ||= this.color || "#000";
   json.selBackground ||= this.selBackground || "#559";
   json.selColor ||= this.selColor || "#fff";
-  json.unselBackground ||= this.unselBackground || "#99d";
+  json.unselBackground ||= this.unselBackground || "transparent" // "#e0e0e0";
   json.unselColor ||= this.unselColor || "#000";
   json.orientation ||= this.orientation || "horizontal";
   json.position ||= this.position || "left";
@@ -366,12 +382,12 @@ setDefaults(json){
 
   async  loadUnlessLoaded(uri){
     try {
-      if(uri.termType && uri.termType==="BlankNode") return uri;
-      uri = typeof uri==="object" ?uri.uri :uri;
       if(!uri) return;
+      if(uri && uri.termType && uri.termType==="BlankNode") return uri;
+      uri = typeof uri==="object" ?uri.uri :uri;
       if(uri.startsWith('inline')) return this.loadFromMemory(uri);
       if(!uri.startsWith('http')&&!uri.startsWith('ls')) uri = window.location.href.replace(/\/[^\/]*$/,'/') + uri;
-      const mungedUri = uri.replace(/\#[^#]*$/,'');
+    const mungedUri = uri.replace(/\#[^#]*$/,'');
       let graph = $rdf.sym(mungedUri);
       if( !kb.any(null,null,null,graph) ){
         console.log("loading "+graph.uri+" ...");
@@ -384,7 +400,7 @@ setDefaults(json){
       else console.log(`<${graph.uri}> already loaded!`);
       return $rdf.sym(uri);
     }
-    catch(e) { console.log(e); return null }
+    catch(e) { console.log(e); return $rdf.sym(uri) }
   }
    getValue(s,p,o,g) {
      let node = kb.any( s, p, o, g );
@@ -403,3 +419,4 @@ setDefaults(json){
 const solidUI = new SolidUIcomponent();
 document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
 export default solidUI;
+

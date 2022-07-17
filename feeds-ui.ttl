@@ -1,0 +1,36 @@
+@prefix : <#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
+
+:FeedTopics
+  a ui:SelectorPanel ;
+  ui:onChange "collectionsInTopic" ;
+  ui:dataSource [
+    a ui:SparqlQuery ;
+    ui:endpoint <feeds.ttl> ;
+    ui:query """
+      PREFIX schema: <http://schema.org/> 
+      PREFIX ui: <http://www.w3.org/ns/ui#>
+      SELECT DISTINCT ?label WHERE {
+        ?x a ui:Feed; schema:about ?label .
+      }
+    """
+  ].
+
+:CollectionsInTopic
+  a ui:SelectorPanel ;
+  ui:onChange "itemsInCollection" ;
+  ui:dataSource [
+    a ui:SparqlQuery ;
+    ui:endpoint <feeds.ttl> ;
+    ui:query """
+      PREFIX schema: <http://schema.org/> 
+      PREFIX ui: <http://www.w3.org/ns/ui#>
+      SELECT DISTINCT ?label ?href WHERE {
+        ?x a ui:Feed;
+           schema:about ${wantedTopic} ;
+           ui:label ?label ;
+           ui:href ?href .
+      }
+    """
+  ].
+
