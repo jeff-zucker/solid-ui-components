@@ -8,11 +8,15 @@ import {Accordion} from './view/accordion.js';
 import {App} from './view/app.js';
 import {Form} from './view/form.js';
 import {Menu} from './view/menu.js';
+import {menuOfMenus} from './view/menuMenu.js';
 import {Modal} from './view/modal.js';
 import {SelectorPanel} from './view/selectorPanel.js';
 import {Table} from './view/table.js';
 import {Tabs} from './view/tabs.js';
 import {BookmarkTree} from './view/bookmarkTree.js';
+import {containerSelector} from './view/selector.js';
+import {CU} from './utils.js';
+const u = new CU();
 
 const sparql = new Sparql();
 const proxy = "https://solidcommunity.net/proxy?uri=";
@@ -46,7 +50,6 @@ class SolidUIcomponent {
 
   async initInternal(containingElement){
     let all = containingElement.querySelectorAll(this.suic)
-//    all= all.length>0 ?all : document.querySelectorAll('[data-suic]')
     for(let element of all) {
       const content = await this.processComponent(element);
       element.appendChild( content );
@@ -54,13 +57,31 @@ class SolidUIcomponent {
     return containingElement;
   }
 
+  async activateComponent(selector,targetElement){
+    targetElement ||= document;
+    let elm = typeof selector==="string" ?document.querySelector(selector) :selector;
+    if(elm.innerHTML.replace(/\s*/g,'').length === 0) {
+      const content = await this.processComponent(elm);
+      elm = content;
+      elm.style.display="block";
+    }
+    return elm;
+  }
+
+  async showPage(event,json){
+     let url = event.href || event.value;
+     let type = event.dataset.contentType;
+     let content =  await u.show(type,url,"",json.displayArea)
+console.log(json.displayArea,content)
+  }
+
   async processComponent(element,subject,json){
     if(!json){    
       if(!subject && element && element.dataset) subject = await this.loadUnlessLoaded(element.dataset.suic);
       if(!subject) return null;
       json = await this.getComponentHash(subject)
-      json.displayArea = element.dataset.display ;
-      json.contentArea = '#' + element.id ;
+      json.displayArea = element.dataset.display || element.parentNode.dataset.display;
+      if(element.id) json.contentArea = '#' + element.id ;
       json.contentSource = subject.value ?subject.value :subject ;
     }
     json ||= subject;
@@ -101,6 +122,12 @@ class SolidUIcomponent {
     }
     else if(json.type==='Menu'){
       return await (new Menu()).render(this,json,element);
+    }
+    else if(json.type==='MenuOfMenus'){
+      return await menuOfMenus(json);
+    }
+    else if(json.type==='ContainerSelector'){
+      return await containerSelector(json);
     }
     else if(json.type==='FeedList'){
       return await (new Feed()).makeFeedSelector(json.contentSource,json.contentArea,json.displayArea);
@@ -238,6 +265,7 @@ this.log('Parts for Component',results);
       }
       if(hash[pred].length==1) hash[pred]=hash[pred][0];
     }
+    hash.id ||= subject.value;
     return hash ;
   }
   log(...args){
@@ -416,7 +444,9 @@ setDefaults(json){
 
 } // END OF CLASS SolidUIcomponent
 
+
 const solidUI = new SolidUIcomponent();
-document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
+//document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
+
 export default solidUI;
 

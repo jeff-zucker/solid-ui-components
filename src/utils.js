@@ -110,11 +110,13 @@ newElement(tag,id,classList,value){
   }
 
   async show(type,uri,string,targetSelector,forceReload){
+    type ||= "";
     if(type.match(/(turtle)|(rdf)|(n3)/)) type = "rdf";
     if(type.match(/image/)) type = "image";
     if(type.match(/video/)) type = "video";
     if(type.match(/audio/)) type = "audio";
     if(type.match(/graphviz/)) type = "graphviz";
+    if(type.match(/(javascript|json|text)/)) type = "text";
     type = type.replace(/.*\//,'');
     if(this._show[type])
        return await this._show[type](uri,string,targetSelector,forceReload);
@@ -133,6 +135,13 @@ newElement(tag,id,classList,value){
   },
   audio : async(uri,string,targetSelector) => {
     if(targetSelector) return this.showIframeSrcDoc(`<audio controls="yes" src="`+uri+`" style="margin-top:2em;"></audio>`,targetSelector);
+  },
+  text : async (uri,string,targetSelector) => {
+    string ||= (await this.loadFile(uri)).body;
+    if(targetSelector) return this.showIframeSrcDoc(string,targetSelector);
+    let div = document.createElement("DIV");
+    div.innerHTML = string;
+    return div;
   },
   html : async (uri,string,targetSelector) => {
     string ||= (await this.loadFile(uri)).body;

@@ -45,23 +45,25 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
      topics.push([n.value, UI.store.any(n,rdfs('label')).value]);
   }
   let onchange = async(e)=>{await collectionSelector(e)};
-  let topicSelector = u.makeSelector(topics,onchange);
+  let topicSelector = u.makeSelector(topics,onchange,null,null,3);
   topicSelector.id="topicSelector";
   if(targetSelector){
-    targetElement = document.querySelector(targetSelector);
+    targetElement = typeof targetSelector==="string" ?document.querySelector(targetSelector) :targetSelector;
     targetElement.innerHTML="";
+    let c = u.newElement('DIV','collectionHolder') ;
+    let i = u.newElement('DIV','itemSelector') ;
     targetElement.appendChild(topicSelector);
-    targetElement.appendChild( u.newElement('SPAN','collectionHolder') );
-    targetElement.appendChild( u.newElement('DIV','itemSelector') );
-    await collectionSelector(topics[0][0]);
+    targetElement.appendChild(c);
+    targetElement.appendChild(i);
+    await collectionSelector(topics[0][0],targetElement);
   }
   let selectors = targetElement.querySelectorAll('#feedMenu select')
   for(let s of selectors){
     s.style="display:block; width:100%;  padding:0.5rem; margin-bottom:1rem; border-radious:0.02rem;";
   }
-  return topicSelector;
+//  return topicSelector;
 
-  async function collectionSelector(topTopic){
+  async function collectionSelector(topTopic,targetElement){
     if(typeof topTopic === "string") topTopic = UI.rdf.sym(topTopic);
     await u.crossLoad(topTopic);
     let topicNodes = UI.store.each(null,bookm('hasTopic'),topTopic)
@@ -76,14 +78,14 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
     };
     let colSelector = await u.makeSelector(collections,onchange,null,null,7);
     colSelector.id="collectionSelector";
-    let el = targetElement.querySelector('#collectionHolder');
+    let el = (targetElement||document).querySelector('#collectionHolder');
     el.innerHTML="";
     el.appendChild(colSelector);
     let selectors = el.querySelectorAll('#feedMenu select')
     for(let s of selectors){
       s.style="display:block; width:100%;  padding:0.5rem; margin-bottom:1rem; border-radious:0.02rem;";
-  }
-   await itemSelector(collections[0][0]);
+    }
+    await itemSelector(collections[0][0]);
   }
 
   async function itemSelector(topTopic){
@@ -141,7 +143,7 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
         link = el.querySelector('content').innerHTML.replace(/.*\[link\]/ ,'').replace(/a href="/,'').replace(/"&gt;.*/,'').replace(/.*&lt;/,'');
       }
       // engadget
-      if(!link.match(/^http/)) link = link.replace(/.*\[CDATA\[/,'');
+      if(!link.match(/^http/)) link = link.replace(/.*\[CDATA\[/,'').replace(/\]\]\>$/,'');
 
       // always use https, not http
       link = link.replace(/^http:/,'https:');
@@ -158,10 +160,12 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
 
 
   async items2list(json,solidUI){
+    let elm = document.getElementById('itemSelector');
+    elm.innerHTML="";
     json.proxy ||= "https://solidcommunity.net/proxy?uri=";
     let items = "";
     let externalLinkIcon = UI.icons.iconBase+`/noun_189137.svg`;
-    externalLinkIcon = `<img src="${externalLinkIcon}" style="width:1em;height:1em;display:inline-block; padding-left:0.4em;opacity:0.5">`;
+    externalLinkIcon = `<img src="${externalLinkIcon}" style="width:1em;height:1em;display:inline-block; padding-left:0.4em;opacity:1">`;
     for(let i of await this.fetchAndParse((json.href||json.link),json.proxy)){
       if(json.displayTarget==="window"){
 /*
@@ -215,13 +219,20 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
     let anchors = wrapper.querySelectorAll('A');
     for(let anchor of anchors){
       anchor.style="text-decoration:none;"
-      anchor.onclick = (e) => {
+      anchor.onclick = async (e) => {
+        if(e.target.parentNode.classList.contains('skipMunge')) return;
         e.preventDefault();
         let iframe = document.createElement('IFRAME');
-        iframe.src = e.target.href;
-        iframe.height="100%";
-        iframe.width="100%";
-        iframe.style.border="none";
+        iframe.style="height:100%;width:100%;border:none";
+        let  uri = e.target.href
+        let r = await window.fetch(uri);
+        let content = await r.text();        
+        content = content.replace(/X-Frame-Options/g,'');
+        uri = uri.replace(/^.*proxy\?uri=/,'');
+        uri = new URL(uri);
+        const b = `<base href="${uri.origin}/"><base target="_BLANK"><style>body{background:white !important}</style>`;
+        iframe.srcdoc = `<body>${b}${content}</body>`
+        iframe.scrollTo({ top: 0, behavior: "smooth" });
         let area = document.querySelector(self.displayArea);
         area.innerHTML = "";
         area.appendChild(iframe);        
