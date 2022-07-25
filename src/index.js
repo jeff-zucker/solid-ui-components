@@ -72,7 +72,8 @@ class SolidUIcomponent {
      let url = event.href || event.value;
      let type = event.dataset.contentType;
      let content =  await u.show(type,url,"",json.displayArea)
-console.log(json.displayArea,content)
+     if(solidUI.showFunction) return await(type,jurl,json.displayArea);
+     return content;
   }
 
   async processComponent(element,subject,json){
