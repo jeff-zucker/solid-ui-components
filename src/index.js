@@ -63,7 +63,7 @@ class SolidUIcomponent {
     if(elm.innerHTML.replace(/\s*/g,'').length === 0) {
       const content = await this.processComponent(elm);
       elm = content;
-      elm.style.display="block";
+      if(elm) elm.style.display="block";
     }
     return elm;
   }
@@ -446,6 +446,7 @@ setDefaults(json){
 
 
 const solidUI = new SolidUIcomponent();
+solidUI.util = u;
 //document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
 
 export default solidUI;

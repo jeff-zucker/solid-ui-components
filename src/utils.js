@@ -14,6 +14,13 @@ export class CU {
   ISA = UI.rdf.sym("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
   PIM = UI.rdf.Namespace("http://www.w3.org/ns/pim/space#");
 
+removeClass(tag,cl){
+    document.querySelector(tag).classList.remove(cl);
+}
+addClass(tag,cl){
+    document.querySelector(tag).classList.add(cl);
+}
+
 newElement(tag,id,classList,value){
    let thing = document.createElement(tag);
    if(id) thing.id = id;
