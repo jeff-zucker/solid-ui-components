@@ -4,7 +4,7 @@
 
   <div data-solid_ui_component="inline:sample.ttl#MyTable"></div>
   <script id="inline:sample.ttl" type="text/turtle">
-    @prefix ui: <https://www.w3.org/ns/ui#> .
+    @prefix ui: <http://www.w3.org/ns/ui#> .
     <#MyTable>
       ui:template ui:Table ;
       ui:dataSource [
@@ -14,16 +14,11 @@
           PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
           SELECT ?Label ?Definition WHERE {
             ?Thing skos:prefLabel ?Label; skos:definition ?Definition .
-          } LIMIT 5
+          }
         """
       ] .
   </script>
   <script src="https://solidcommunity.net/mashlib.js"></script>
-  <script src="./src/user.js"></script>
-  <script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
-  <script type="module">
-    import solidUI from './src/index.js';
-    solidUI.init();
-  </script>
+  <script src="./dist/solid-ui-components.bundle.js"></script>
 
 </body></html>

@@ -1,0 +1,51 @@
+@prefix : <#> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
+@prefix pad: </test/MyNotepad/index.ttl#> .
+@prefix tra: </test/MyTracker/index.ttl#> .
+@prefix add: </test/MyAddressBook/index.ttl#> .
+@prefix chat: </test/MyLongChat/index.ttl#> .
+
+
+<#Tools>                                                                               
+  a ui:Tabset ;    
+  ui:label "Tools" ;                   
+  ui:popout true;                                                                      
+  ui:orientation "horizontal" ;                                                        
+  ui:selBackground "#eee" ;                                                            
+  ui:unselBackground "#ccc" ;                                                          
+  ui:unselColor "black" ;                                                              
+  ui:position "left" ;                                                                 
+  ui:style """                                                                         
+    position:absolute;                                                                 
+    top:0;                                                                             
+    right:0;                                                                           
+    width:680px;                                                                       
+    border:4px solid #444;                                                             
+    background:#444                                                                    
+  """ ;                                                                                
+  ui:parts ( :Notepad :Tracker :Chat :AddressBook :Inbox ) .  
+
+<#Notepad>
+  a ui:SolidOSLink;
+  ui:label "Notepad";
+  ui:href pad:this .
+
+<#AddressBook>
+  a ui:SolidOSLink;
+  ui:label "Address Book";
+  ui:href add:this .
+
+<#Tracker>
+  a ui:SolidOSLink;
+  ui:label "Task Tracker";
+  ui:href tra:this .
+
+<#Chat>
+  a ui:SolidOSLink;
+  ui:label "Chat";
+  ui:href chat:this .
+
+<#Inbox>
+  a ui:SolidOSLink;
+  ui:label "Inbox";
+  ui:href </inbox/> . 

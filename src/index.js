@@ -1,19 +1,28 @@
+import * as user from  './user.js';
 // DataSources
-import {Feed} from './model/rss.js';
+//import {Feed} from './model/rss.js';
+import {Feed} from './model/feed.js';
 import {Sparql} from './model/sparql.js';
 // Templates
-import {App} from './view/app.js';
 import {Accordion} from './view/accordion.js';
+import {App} from './view/app.js';
 import {Form} from './view/form.js';
-import {Modal} from './view/modal.js';
-import {Tabs} from './view/tabs.js';
-import {Table} from './view/table.js';
 import {Menu} from './view/menu.js';
-const sparql = new Sparql();
+import {menuOfMenus} from './view/menuMenu.js';
+import {Modal} from './view/modal.js';
+import {SelectorPanel} from './view/selectorPanel.js';
+import {Table} from './view/table.js';
+import {Tabs} from './view/tabs.js';
+import {BookmarkTree} from './view/bookmarkTree.js';
+import {containerSelector} from './view/selector.js';
+import {CU} from './utils.js';
+const u = new CU();
 
+const sparql = new Sparql();
 const proxy = "https://solidcommunity.net/proxy?uri=";
-const $rdf = panes.UI.rdf;
-const kb = panes.UI.store;
+const $rdf = UI.rdf;
+const kb = window.kb = $rdf.graph();
+if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
 let fetcher;
 const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
 const ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
@@ -21,9 +30,18 @@ const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 
 class SolidUIcomponent {
 
+  constructor(){
+  }
+
+
+  // BREAKING : components marked as data-suic, not data-solid_ui_component
+  suic = "[data-suic]";
+
   async init(){
+
     // fetcher = this.makeLSfetcher(UI); // see drafts/in-browser-fetcher.js
-    const all = document.querySelectorAll('[data-solid_ui_component]')
+    let all = document.querySelectorAll(this.suic)
+//    all= all.length>0 ?all : document.querySelectorAll('[data-solid_ui_component]')
     for(let element of all) {
       const content = await this.processComponent(element);
       if(content) element.appendChild( content );
@@ -31,7 +49,7 @@ class SolidUIcomponent {
   }
 
   async initInternal(containingElement){
-    const all = containingElement.querySelectorAll('[data-solid_ui_component]')
+    let all = containingElement.querySelectorAll(this.suic)
     for(let element of all) {
       const content = await this.processComponent(element);
       element.appendChild( content );
@@ -39,28 +57,52 @@ class SolidUIcomponent {
     return containingElement;
   }
 
+  async activateComponent(selector,targetElement){
+    targetElement ||= document;
+    let elm = typeof selector==="string" ?document.querySelector(selector) :selector;
+    if(elm.innerHTML.replace(/\s*/g,'').length === 0) {
+      const content = await this.processComponent(elm);
+      elm = content;
+      elm.style.display="block";
+    }
+    return elm;
+  }
+
+  async showPage(event,json){
+     let url = event.href || event.value;
+     let type = event.dataset.contentType;
+     let content =  await u.show(type,url,"",json.displayArea)
+console.log(json.displayArea,content)
+  }
+
   async processComponent(element,subject,json){
     if(!json){    
-      if(!subject && element && element.dataset) subject = await this.loadUnlessLoaded(element.dataset.solid_ui_component);
+      if(!subject && element && element.dataset) subject = await this.loadUnlessLoaded(element.dataset.suic);
       if(!subject) return null;
       json = await this.getComponentHash(subject)
+      json.displayArea = element.dataset.display || element.parentNode.dataset.display;
+      if(element.id) json.contentArea = '#' + element.id ;
+      json.contentSource = subject.value ?subject.value :subject ;
     }
     json ||= subject;
     if(!json) {console.log("No ComponentHASH ",subject); return;}
-
     // default color,orientation,position
     json = this.getDefaults(json);
+
+//    if(json.type.match(/Link/)){
+//      return displayLink(json)
+//    }
 
     // DATASOURCE
     let dataSource = typeof json.dataSource==="string" ?await this.getComponentHash(json.dataSource) : json.dataSource ;
     if(dataSource && dataSource.type==='SparqlQuery') {
       let endpoint = dataSource.endpoint;
       let query = dataSource.query;
-      json.parts = await this.sparqlQuery(endpoint,query);
+      json.parts = await this.sparqlQuery(endpoint,query,json);
       if(json.type==='SparqlQuery') return json.parts;
     }
     if(json.type==='SparqlQuery') {
-      json.parts = await this.sparqlQuery(json.endpoint,json.query);
+      json.parts = await this.sparqlQuery(json.endpoint,json.query,json);
       if(json.type==='SparqlQuery') return json.parts;
     }
     if(json.type==='AnchorList') {
@@ -72,18 +114,29 @@ class SolidUIcomponent {
       json.parts = sparql.flatten(json.parts,json.groupOn)
       console.log(json.groupOn,json.parts)
     }
-    if(json.type!="Component") this.log(`Parts for ${json.type} `,json.parts);
     if(json.type==='App'){
       return await (new App()).render(this,json);
     }
     else if(json.type && json.type.match(/Link/)){
-      return await displayLink(element,json,element);
+      return await window.displayLink(element,json,element);
     }
     else if(json.type==='Menu'){
       return await (new Menu()).render(this,json,element);
     }
-    else if(json.type==='Feed'&&(json.href||json.link)){
-      return await (new Feed()).render(this,json);
+    else if(json.type==='MenuOfMenus'){
+      return await menuOfMenus(json);
+    }
+    else if(json.type==='ContainerSelector'){
+      return await containerSelector(json);
+    }
+    else if(json.type==='FeedList'){
+      return await (new Feed()).makeFeedSelector(json.contentSource,json.contentArea,json.displayArea);
+    }
+    else if(json.type==='BookmarkTree'){
+      await (new BookmarkTree()).getTopic(json.contentSource,json.contentArea,json.displayArea,'start');
+      let elm = document.querySelector(json.contentArea);
+      elm.style = "padding:0;margin:0;list-style:none;"
+      document.getElementById('ocbStart').click();
     }
     else if(json.type==='SelectorPanel'){
       let panel = new SelectorPanel();
@@ -91,7 +144,8 @@ class SolidUIcomponent {
       return await panel.render(json);
     }
     else if(json.type==='ModalButton'){
-      return await (new Modal()).render(this,json)
+      // return await (new Modal()).render(this,json)
+         return await (new Modal()).render(json,this)
     }
     else if(json.type==='Accordion'){
       return await (new Accordion()).render(this,json)
@@ -178,12 +232,13 @@ this.log('Parts for Component',results);
       return contentWrapper ;
     
   }
-
-
   async getComponentHash(subject,hash){
     subject = await this.loadUnlessLoaded(subject);
     if(!subject) return null;
-    let predicatePhrases = kb.match(subject);
+    let predicatePhrases = kb.match(subject,null,null);
+    if(subject.doc){
+      let thisdoc = kb.match(null,null,null,subject.doc())
+    }
     hash = hash || {}
     for(let p of predicatePhrases){
       let pred = p.predicate.value.replace(/http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#/,'').replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
@@ -210,6 +265,7 @@ this.log('Parts for Component',results);
       }
       if(hash[pred].length==1) hash[pred]=hash[pred][0];
     }
+    hash.id ||= subject.value;
     return hash ;
   }
   log(...args){
@@ -225,11 +281,12 @@ this.log('Parts for Component',results);
 /*-----------
   SPARQL
 ----------*/
-  async sparqlQuery(endpoint,queryString){
+  async sparqlQuery(endpoint,queryString,json){
     if(typeof Comunica !="undefined")
-      return await sparql.comunicaQuery(endpoint,queryString);
+      return await sparql.comunicaQuery(endpoint,queryString,json);
     else   
-      return await sparql.rdflibQuery(kb,endpoint,queryString);  
+      return await sparql.rdflibQuery(endpoint,queryString,json);
+//    return await sparql.rdflibQuery(solidUI,kb,endpoint,queryString,json);  
   }
 
 
@@ -242,14 +299,15 @@ getDefaults(json){
   json.height ||= this.height;
   json.width ||= this.width;
   json.proxy ||= this.proxy || proxy;
-  json.background ||= this.background || "#fff";
+  json.background ||= this.background || "#f6f6f6";
   json.color ||= this.color || "#000";
   json.selBackground ||= this.selBackground || "#559";
   json.selColor ||= this.selColor || "#fff";
-  json.unselBackground ||= this.unselBackground || "#99d";
+  json.unselBackground ||= this.unselBackground || "transparent" // "#e0e0e0";
   json.unselColor ||= this.unselColor || "#000";
   json.orientation ||= this.orientation || "horizontal";
   json.position ||= this.position || "left";
+  this.proxy = json.proxy
   return(json);
 }
 setDefaults(json){
@@ -262,6 +320,7 @@ setDefaults(json){
   this.unselColor = json.unselColor;
   this.orientation = json.orientation;
   this.position = json.position
+  this.proxy = json.proxy
   return(this.getDefaults(json));
 }
 
@@ -269,7 +328,7 @@ setDefaults(json){
     function fillOneTemplateRow(templateStr,object){
       for(let o of Object.keys(object) ){
         let newStuff=object[o]||" ";
-        if(typeof newStuff==='object') newStuff = newStuff.join(", ");
+        if(typeof newStuff==='object' && newStuff.length>1) newStuff = newStuff.join(", ");
         let re = new RegExp( `\\$\\{${o}\\}`, 'gi' );
         templateStr  = templateStr.replace( re, newStuff );
       }
@@ -291,6 +350,9 @@ setDefaults(json){
 
   /* UTILITIES
   */
+
+  diff(diffMe, diffBy){ diffMe.split(diffBy).join('') }
+
   simulateClick(el){
     if (el.fireEvent) {
       el.fireEvent('on' + 'click');
@@ -348,23 +410,25 @@ setDefaults(json){
 
   async  loadUnlessLoaded(uri){
     try {
-      if(uri.termType && uri.termType==="BlankNode") return uri;
-      uri = typeof uri==="object" ?uri.uri :uri;
       if(!uri) return;
+      if(uri && uri.termType && uri.termType==="BlankNode") return uri;
+      uri = typeof uri==="object" ?uri.uri :uri;
       if(uri.startsWith('inline')) return this.loadFromMemory(uri);
       if(!uri.startsWith('http')&&!uri.startsWith('ls')) uri = window.location.href.replace(/\/[^\/]*$/,'/') + uri;
-      const mungedUri = uri.replace(/\#[^#]*$/,'');
+    const mungedUri = uri.replace(/\#[^#]*$/,'');
       let graph = $rdf.sym(mungedUri);
       if( !kb.any(null,null,null,graph) ){
         console.log("loading "+graph.uri+" ...");
         fetcher = fetcher || $rdf.fetcher(kb);
         let r = await fetcher.load(graph.uri);
-        if(kb.any(null,null,null,graph)) console.log("Resource loaded!");
+        if(kb.any(null,null,null,graph)) console.log(`<${graph.uri}> loaded!`);
+        else console.log(`<${graph.uri}> could not be loaded!`);
+//console.log(kb.match(null,null,null,graph));
       }
-      //else console.log(uri," already loaded!");
+      else console.log(`<${graph.uri}> already loaded!`);
       return $rdf.sym(uri);
     }
-    catch(e) { console.log(e); return null }
+    catch(e) { console.log(e); return $rdf.sym(uri) }
   }
    getValue(s,p,o,g) {
      let node = kb.any( s, p, o, g );
@@ -380,5 +444,9 @@ setDefaults(json){
 
 } // END OF CLASS SolidUIcomponent
 
+
 const solidUI = new SolidUIcomponent();
+//document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
+
 export default solidUI;
+

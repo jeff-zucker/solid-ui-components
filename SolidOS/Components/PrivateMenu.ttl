@@ -1,0 +1,50 @@
+@prefix : <#> .
+@prefix toolsFolder: </test> .
+@prefix ui: <http://www.w3.org/ns/ui#> .
+
+<#PrivateMenu>
+  a ui:Menu ;
+  ui:parts ( :MyPodMenu :Tools :Browse :Help  ) .
+
+<#Tools>
+  a ui:Link ;
+  ui:label "Tools" ;
+  ui:popout 1 ;
+  ui:href <./ToolsMenu.ttl#Tools> .
+
+<#MyPodMenu>
+  a ui:Menu;
+  ui:label "My Pod";
+  ui:parts ( :Documents :EditProfile :EditPreferences :Create :Customize ) .
+
+<#EditPreferences>
+  a ui:SolidOSLink;
+  ui:label "Edit Preferences";
+  ui:href </settings/preferences.ttl> .
+
+
+<#EditProfile>
+  a ui:SolidOSLink;
+  ui:label "Edit Profile";
+  ui:href <https://jeff-zucker.solidcommunity.net/profile/card#me> .
+
+<#Documents>
+  a ui:SolidOSLink;
+  ui:label "Browse Documents";
+  ui:href </> .
+
+<#Create>
+  a ui:SolidOSLink;
+  ui:label "Create New Thing";
+  ui:href </> .
+
+<#Customize>
+  a ui:SolidOSLink;
+  ui:label "Customize SolidOS";
+  ui:href </SolidOS-Tools/> .
+
+<#Browse>
+   ui:label "Browse" .
+  
+<#Help>
+   ui:label "Help" .

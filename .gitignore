@@ -1,14 +1,9 @@
-*~
-*#
-drafts
-new
-previous-versions
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 node_modules/
 .npm
 coverage/
-dist/
 test-folder/
+SolidOS/
 

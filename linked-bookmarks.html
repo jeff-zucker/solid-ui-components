@@ -1,0 +1,23 @@
+<!DOCTYPE HTML><html lang="en"><head>
+  <meta charset='UTF-8'>
+  <title>Open Culture Browser</title>
+  <script src="https://cdn.jsdelivr.net/npm/rdflib@2.1.3/dist/rdflib.min.js">
+  </script>
+  <script type="module" src="./src/view/linked-bookmarks.js"></script>
+  <link rel="stylesheet" href="./assets/linked-bookmarks.css" />
+</head><body>
+
+  <!-- Change the data-component to point to your topmost turtle document
+  -->
+  <div id="sidebar">
+    <div id="bmarkMenu" class="ocb tree" 
+      data-component = "./data/ocb.ttl#OpenCultureBrowser"
+      data-display   = "MyDisplay"
+    ></div>
+  </div>
+
+  <!-- Change the src of this iframe to point to your initial page
+  -->
+  <iframe id="MyDisplay" src="initial.html"></iframe> 
+  
+</body></html>

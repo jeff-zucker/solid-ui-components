@@ -1,0 +1,117 @@
+/*
+body {
+  overflow:hidden
+  font-size:16px;
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*/
+#ocbStart {
+  display:block;
+  margin-bottom:0.5rem;
+  margin-top:0.5rem;
+  margin-left:-0.25rem;
+}
+#mainMenu {
+  display:block;
+  text-align:right;
+  width:100%;
+}
+#sidebar {
+    position:absolute;
+    top:1vh;
+    left:1vw;
+    bottom:0;
+    width:24vw;
+    margin-right:0;
+    padding-right:0;
+    overflow-y:scroll;
+}
+#MyDisplay, iframe {
+    position:absolute;
+    top:0;
+    left:25vw;
+    bottom:0;
+    height:100%;
+    width:75vw;
+    border:none;
+    overflow-y:scroll;
+}
+body.collapsed #sidebar { width:4vw; }
+body.collapsed #MyDisplay { width:96vw; left:4vw;}
+body.collapsed #bmarkMenu { display:none; }
+
+.item {
+  margin-top:0.4em;
+}
+ul {
+  list-style-type : none;
+  margin:0;
+  padding:0;
+  margin-left:0.25em;
+}
+ul ul {
+  list-style-type : none;
+  margin-left:1em;
+}
+li.item {
+  margin-bottom:0;
+}
+
+/* Remove default bullets */
+#myUL ul {
+  list-style-type: none;
+  padding-left:1em;
+}
+
+/* Remove margins and padding from the parent ul */
+#myUL {
+  margin: 0;
+  padding: 0;
+}
+/* Style the caret/arrow */
+.caret {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+
+.item {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+.item::before {
+  content: "\274f";
+  content: "\2740";
+  color: gray;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+  content: "\25B6"; 
+/*  content: "\266C"; // music notes */
+  color: gray;
+  display: inline-block;
+  margin-right: 6px;
+}
+#ocbStart.caret::before {
+  content:"";
+}
+#ocbStart {
+  font-weight:bold;
+}
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+  display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+  display: block;
+}
