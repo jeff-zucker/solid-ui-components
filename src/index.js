@@ -71,8 +71,9 @@ class SolidUIcomponent {
   async showPage(event,json){
      let url = event.href || event.value;
      let type = event.dataset.contentType;
+     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea);
      let content =  await u.show(type,url,"",json.displayArea)
-console.log(json.displayArea,content)
+     return content;
   }
 
   async processComponent(element,subject,json){
@@ -446,6 +447,7 @@ setDefaults(json){
 
 
 const solidUI = new SolidUIcomponent();
+solidUI.util = u;
 //document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
 
 export default solidUI;

@@ -14,6 +14,15 @@ export class CU {
   ISA = UI.rdf.sym("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
   PIM = UI.rdf.Namespace("http://www.w3.org/ns/pim/space#");
 
+
+// HTML DOM FUNCTIONS
+//
+addClass(elementSelector,className){
+  document.querySelector(elementSelector).classList.add(className);
+}
+removeClass(elementSelector,className){
+  document.querySelector(elementSelector).classList.remove(className);
+}
 newElement(tag,id,classList,value){
    let thing = document.createElement(tag);
    if(id) thing.id = id;
@@ -112,11 +121,12 @@ newElement(tag,id,classList,value){
   async show(type,uri,string,targetSelector,forceReload){
     type ||= "";
     if(type.match(/(turtle)|(rdf)|(n3)/)) type = "rdf";
-    if(type.match(/image/)) type = "image";
-    if(type.match(/video/)) type = "video";
-    if(type.match(/audio/)) type = "audio";
-    if(type.match(/graphviz/)) type = "graphviz";
-    if(type.match(/(javascript|json|text)/)) type = "text";
+    else if(type.match(/image/)) type = "image";
+    else if(type.match(/video/)) type = "video";
+    else if(type.match(/audio/)) type = "audio";
+    else if(type.match(/graphviz/)) type = "graphviz";
+    else if(type.match(/markdown/)) type = "markdown";
+    else if(type.match(/(javascript|json|text)/)) type = "text";
     type = type.replace(/.*\//,'');
     if(this._show[type])
        return await this._show[type](uri,string,targetSelector,forceReload);
