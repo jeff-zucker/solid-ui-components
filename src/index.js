@@ -72,7 +72,8 @@ class SolidUIcomponent {
      let url = event.href || event.value;
      let type = event.dataset.contentType;
      let content =  await u.show(type,url,"",json.displayArea)
-     if(solidUI.showFunction) return await(type,jurl,json.displayArea);
+     console.log("showPage",content);
+     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea);
      return content;
   }
 
