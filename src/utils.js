@@ -404,9 +404,9 @@ showIframeSrcDoc(string,targetSelector){
     if(selected) selectEl.value = selected;
     selectEl.value ||= selectEl.childNodes[0].value;
 
-    selectEl.addEventListener('click',async(e)=>{
-      onchange(e.target.value)
-    })
+//    selectEl.addEventListener('click',async(e)=>{
+//      onchange(e.target.value)
+//    })
     selectEl.addEventListener('change',async(e)=>{
       onchange(e.target.value)
     })

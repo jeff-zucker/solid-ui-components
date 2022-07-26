@@ -70,16 +70,19 @@ class SolidUIcomponent {
 
   async showPage(event,json){
      let url = event.href || event.value;
-     let type = event.dataset.contentType;
+     let type = event.dataset.contentType || u.findType(url)
+     if(solidUI.showFunction) await solidUI.showFunction(type,url,json.displayArea);
      let content =  await u.show(type,url,"",json.displayArea)
-     console.log("showPage",content);
-     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea);
-     return content;
+//     return content;
   }
 
   async processComponent(element,subject,json){
     if(!json){    
-      if(!subject && element && element.dataset) subject = await this.loadUnlessLoaded(element.dataset.suic);
+      if(!subject && element && element.dataset){
+        let urlToLoad  = element.dataset.suic;
+        if(urlToLoad.startsWith('/')) urlToLoad = window.origin + urlToLoad;
+        subject = await this.loadUnlessLoaded(urlToLoad);
+      }
       if(!subject) return null;
       json = await this.getComponentHash(subject)
       json.displayArea = element.dataset.display || element.parentNode.dataset.display;

@@ -45,7 +45,7 @@
     containers = await selector(containers,containerOnchange,url,null,collectionSize)
     resources =  await selector(resources,resourceOnchange,url,null,resourceSize)
     containers.classList = ["containerSelector"];
-    resources.classList = ["resourceSelector"];
+    if(resources) resources.classList = ["resourceSelector"];
     if(targetSelector && typeof targetSelector==="string") targetSelector = document.querySelector(targetSelector);
     let div = targetSelector ?targetSelector :document.createElement('DIV');
     div.innerHTML = "";
@@ -88,7 +88,6 @@
   }
 
 
-
   /*
      @paramoptions : an array of arrays [ [value1,label1], [value2,label2] ]
      onchange : callback function when item selected
@@ -98,6 +97,39 @@
      returns an HTML select element
    */
   export function selector(options,onchange,selected,targetSelector,size){
+
+    function mungeLabel(label){
+      if(!label) return "";
+      label = decodeURI(label);
+      if(!label.endsWith("/")) label = label.replace(/.*\//,'')
+      return label || "/";
+    }
+    function addAttributes(option,optionEl){
+      if(Object.keys(option).length>2){
+        for(let k of Object.keys(option)){
+          if(k==="value"||k==="label")continue;
+          optionEl.dataset ||= {};
+          optionEl.dataset[k] = option[k];
+        }
+      }
+      return optionEl;
+    }
+
+
+
+    let computedSize = options.length;
+    size ||= 0;
+    size = computedSize <= size ?computedSize :size;
+    if(size <1) return;
+    if(size ===1) {
+      let button = document.createElement('BUTTON');
+      button.value = options[0].value;
+      button.innerHTML = mungeLabel(options[0].label);
+      button.addEventListener('click',(e)=>{
+        onchange(e.target)
+      })
+      return button;
+    }
     let selectEl = document.createElement('SELECT');
     for(let option of options){
       let value,label;
@@ -107,14 +139,17 @@
         label = option.label || option.value
       }
       if(!label || !option) continue;
-      label = decodeURI(label);
-      if(!label.endsWith("/"))
-         label = label.replace(/.*\//,'')
-      label ||= "/";
+      label=mungeLabel(label);
+//      label = decodeURI(label);
+//      if(!label.endsWith("/"))
+//         label = label.replace(/.*\//,'')
+//      label ||= "/";
       let optionEl = document.createElement('OPTION');
       optionEl.value = optionEl.title = value;
       optionEl.innerHTML = label;
       optionEl.style = "padding:0.25em;";
+      optionEl = addAttributes(option,optionEl);
+/*
       if(Object.keys(option).length>2){
         for(let k of Object.keys(option)){
           if(k==="value"||k==="label")continue;
@@ -122,6 +157,7 @@
           optionEl.dataset[k] = option[k];
         }
       }
+*/
       selectEl.appendChild(optionEl);
     }
 
@@ -129,16 +165,13 @@
     if(selected) selectEl.value = selected;
 //    selectEl.value ||= selectEl.childNodes[0].value;
 
-    selectEl.addEventListener('click',async(e)=>{
-      onchange(e.target)
-    })
+//    selectEl.addEventListener('click',async(e)=>{
+//      onchange(e.target)
+//    })
     selectEl.addEventListener('change',async(e)=>{
       onchange(e.target)
     })
-    let computedSize = options.length;
-    if(size){
-      selectEl.size = computedSize <= size ?computedSize :size;
-    }
+    selectEl.size = size
     selectEl.style="padding:0.5em;width:100%"
     if(targetSelector) {
       let targetEl = document.querySelector(targetSelector)

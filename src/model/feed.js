@@ -25,12 +25,9 @@ label
 
 export class Feed {
 
-
 async makeFeedSelector(topTopic,targetSelector,displayArea){
-
   self = this;
   self.displayArea = displayArea;
-
 
   const u = new CU();
   const bookm = UI.rdf.Namespace("http://www.w3.org/2002/01/bookmark#");
@@ -92,21 +89,7 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
     let elm = document.getElementById('itemSelector');
     elm.innerHTML="";
     elm.appendChild( await self.items2list({href:topTopic})  );
-    return;
-    if(typeof topTopic === "string") topTopic = UI.rdf.sym(topTopic);
-    await u.crossLoad(topTopic);
-    let topicNodes = UI.store.each(null,bookm('hasTopic'),topTopic)
-    let collections = [];
-    for(let n of topicNodes){
-       let href = UI.store.any(n,bookm('recalls')).value;
-       let label = UI.store.any(n,rdfs('label')).value;
-       collections.push([href,label]);
-    }
-    let onchange = async(e)=>{await itemDisplay(e)};
-    let colSelector = await u.makeSelector(collections,onchange,wanted,targetSelector);
-    let el = document.querySelector(targetSelector);
-    el.appendChild(colSelector);
-    await itemSelector(collections[0][0],wanted,targetSelector);
+
   }
 
 }
@@ -160,6 +143,7 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
 
 
   async items2list(json,solidUI){
+
     let elm = document.getElementById('itemSelector');
     elm.innerHTML="";
     json.proxy ||= "https://solidcommunity.net/proxy?uri=";
