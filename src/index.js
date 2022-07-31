@@ -20,17 +20,16 @@ const u = new CU();
 
 const sparql = new Sparql();
 const proxy = "https://solidcommunity.net/proxy?uri=";
-const $rdf = UI.rdf;
-const kb = window.kb = $rdf.graph();
-if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
-let fetcher;
-const skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
-const ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
-const rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 
 class SolidUIcomponent {
 
+$rdf = UI.rdf;
+skos = $rdf.Namespace('http://www.w3.org/2004/02/skos/core#');
+ui = $rdf.Namespace('http://www.w3.org/ns/ui#');
+rdf=$rdf.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+
   constructor(){
+if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
   }
 
 
@@ -240,9 +239,9 @@ this.log('Parts for Component',results);
   async getComponentHash(subject,hash){
     subject = await this.loadUnlessLoaded(subject);
     if(!subject) return null;
-    let predicatePhrases = kb.match(subject,null,null);
+    let predicatePhrases = UI.store.match(subject,null,null);
     if(subject.doc){
-      let thisdoc = kb.match(null,null,null,subject.doc())
+      let thisdoc = UI.store.match(null,null,null,subject.doc())
     }
     hash = hash || {}
     for(let p of predicatePhrases){
@@ -291,7 +290,7 @@ this.log('Parts for Component',results);
       return await sparql.comunicaQuery(endpoint,queryString,json);
     else   
       return await sparql.rdflibQuery(endpoint,queryString,json);
-//    return await sparql.rdflibQuery(solidUI,kb,endpoint,queryString,json);  
+//    return await sparql.rdflibQuery(solidUI,UI.store,endpoint,queryString,json);  
   }
 
 
@@ -385,7 +384,7 @@ setDefaults(json){
   getComponentType(subject){
     if(!subject) return null;
     let uiNamespace = 'http://www.w3.org/ns/ui#';
-    let type = kb.each( subject, rdf('type') ).map( (object) =>{
+    let type = UI.store.each( subject, rdf('type') ).map( (object) =>{
       object = object.value;
       if(object.match(/ns\/ui#/)) return object.replace(/.*\#/,'');
     });
@@ -393,21 +392,21 @@ setDefaults(json){
   }
 
   async clearInline(){
-    for(let stm of kb.match()){
-      if(stm.graph.value.startsWith('inline:')) kb.remove(stm);
+    for(let stm of UI.store.match()){
+      if(stm.graph.value.startsWith('inline:')) UI.store.remove(stm);
     }
   }
 
   loadFromMemory(sentUri){
     let uri = sentUri //.replace(/^inline:/,'');
-    if( kb.any(null,null,null,$rdf.sym(uri)) ) return $rdf.sym(uri);
+    if( UI.store.any(null,null,null,$rdf.sym(uri)) ) return $rdf.sym(uri);
     let [eName,fragment] = uri.split(/#/);
     let eDoc = document.getElementById(eName)
     let uiString = eDoc.innerText || eDoc.value;
     uiString = uiString.trim()
     if(uiString.startsWith('\<\!\[CDATA\[')) uiString=uiString.replace(/^\<\!\[CDATA\[/,'').replace(/\]\]$/,'').replace(/~~/g,'#');
     try {
-      $rdf.parse(  uiString, kb, uri, "text/turtle" ); 
+      $rdf.parse(  uiString, UI.store, uri, "text/turtle" ); 
       return($rdf.sym(uri));
     }
     catch(e) { console.log(e) }
@@ -422,13 +421,12 @@ setDefaults(json){
       if(!uri.startsWith('http')&&!uri.startsWith('ls')) uri = window.location.href.replace(/\/[^\/]*$/,'/') + uri;
     const mungedUri = uri.replace(/\#[^#]*$/,'');
       let graph = $rdf.sym(mungedUri);
-      if( !kb.any(null,null,null,graph) ){
+      if( !UI.store.any(null,null,null,graph) ){
         console.log("loading "+graph.uri+" ...");
-        fetcher = fetcher || $rdf.fetcher(kb);
-        let r = await fetcher.load(graph.uri);
-        if(kb.any(null,null,null,graph)) console.log(`<${graph.uri}> loaded!`);
+        let r = await UI.store.fetcher.load(graph.uri);
+        if(UI.store.any(null,null,null,graph)) console.log(`<${graph.uri}> loaded!`);
         else console.log(`<${graph.uri}> could not be loaded!`);
-//console.log(kb.match(null,null,null,graph));
+//console.log(UI.store.match(null,null,null,graph));
       }
       else console.log(`<${graph.uri}> already loaded!`);
       return $rdf.sym(uri);
@@ -436,11 +434,11 @@ setDefaults(json){
     catch(e) { console.log(e); return $rdf.sym(uri) }
   }
    getValue(s,p,o,g) {
-     let node = kb.any( s, p, o, g );
+     let node = UI.store.any( s, p, o, g );
      return node ?node.value :"" 
    }
    valuesContain(s,p,o,g,wanted) {
-    let nodes = kb.each( s, p, o, g );
+    let nodes = UI.store.each( s, p, o, g );
     for(let n of nodes) {
       n = n ?n.value :"";
       if(n===wanted) return n;
@@ -449,10 +447,12 @@ setDefaults(json){
 
 } // END OF CLASS SolidUIcomponent
 
-
-const solidUI = new SolidUIcomponent();
+let solidUI = new SolidUIcomponent();
 solidUI.util = u;
-//document.addEventListener('DOMContentLoaded',()=>{solidUI.init();});
-
 export default solidUI;
-
+/*
+document.addEventListener('DOMContentLoaded', function() {    
+  let solidUI = new SolidUIcomponent();
+  solidUI.util = u;
+});
+*/

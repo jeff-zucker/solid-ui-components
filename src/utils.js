@@ -10,9 +10,12 @@ import {Form} from './view/form.js';
 
 export class CU {
 
-  UIO = UI.rdf.Namespace("http://www.w3.org/ns/ui#");
-  ISA = UI.rdf.sym("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-  PIM = UI.rdf.Namespace("http://www.w3.org/ns/pim/space#");
+  constructor(){
+    this.UIO = UI.rdf.Namespace("http://www.w3.org/ns/ui#");
+    this.ISA = UI.rdf.sym("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+    this.PIM = UI.rdf.Namespace("http://www.w3.org/ns/pim/space#");
+  }
+
 
 removeClass(tag,cl){
     document.querySelector(tag).classList.remove(cl);
@@ -183,6 +186,17 @@ newElement(tag,id,classList,value){
     let div = document.createElement("DIV");
     div.innerHTML = parsedString;
     return div; 
+  },
+  SolidOSlink(url){
+      // HIDE OTHER document.getElementById('mainMain').style.display="none";
+      const targetElement = document.getElementById('suicTabulator')
+      targetElement.style.display="block";
+      const targetOutline = targetElement.querySelector('#outline');
+      let subject = UI.rdf.sym(url);
+      //let wantedPane = json.pane ?panes.byName(json.pane) :null;
+      setHistory(window.orgin+'/s/solid-content-manager/index.html?uri='+url);
+      window.outliner.GotoSubject(subject,true,wantedPane,true,null,targetOutline);
+      return;
   },
   Form : async(subject,targetSelector,forceReload)=>{
     let uri = subject.doc ?subject.doc() :subject;

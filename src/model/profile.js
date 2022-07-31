@@ -1,3 +1,7 @@
+/* loadProfile()
+*/
+export async function loadProfile(webId) {
+
 const $rdf = UI.rdf;
 
 const RDFS = $rdf.Namespace('http://www.w3.org/2000/01/rdf-schema#');
@@ -7,9 +11,6 @@ const PIM = $rdf.Namespace('http://www.w3.org/ns/pim/space#');
 const LDP = $rdf.Namespace('http://www.w3.org/ns/ldp#');
 const VCARD = $rdf.Namespace('http://www.w3.org/2006/vcard/ns#');
 
-/* loadProfile()
-*/
-export async function loadProfile(webId) {
   const kb = window.kb;
   const fetcher = $rdf.fetcher(kb);
   const node = $rdf.sym(webId);
