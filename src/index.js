@@ -15,6 +15,7 @@ import {Table} from './view/table.js';
 import {Tabs} from './view/tabs.js';
 import {BookmarkTree} from './view/bookmarkTree.js';
 import {containerSelector} from './view/selector.js';
+import {buttonListMenu} from './view/buttonListMenu.js';
 import {CU} from './utils.js';
 const u = new CU();
 
@@ -59,20 +60,27 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
   async activateComponent(selector,targetElement){
     targetElement ||= document;
     let elm = typeof selector==="string" ?document.querySelector(selector) :selector;
+    let c = await this.getComponentHash(elm.getAttribute('data-suic'));
+console.log(selector,c);
     if(elm.innerHTML.replace(/\s*/g,'').length === 0) {
       const content = await this.processComponent(elm);
       elm = content;
-      if(elm) elm.style.display="block";
+      if(elm){
+        elm.style ||= {};
+        elm.style.display="block";
+      }
     }
     return elm;
   }
 
   async showPage(event,json){
-     let url = event.href || event.value;
+     event ||= {dataset:{}};
+     json ||= {};
+     let url = event.href || event.value || json.link || json['data'];
      let type = event.dataset.contentType || u.findType(url)
-     if(solidUI.showFunction) await solidUI.showFunction(type,url,json.displayArea);
+     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea);
      let content =  await u.show(type,url,"",json.displayArea)
-//     return content;
+     return content;
   }
 
   async processComponent(element,subject,json){
@@ -89,6 +97,16 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
       json.contentSource = subject.value ?subject.value :subject ;
     }
     json ||= subject;
+
+    if(json.type==="Component"){
+       if(json.dataSource.endsWith('/')) return await containerSelector(json);
+       let newJson = await this.getComponentHash(json.dataSource,json);
+       newJson.contentSource = json.dataSource;
+       newJson.contentArea = json.contentArea;
+       newJson.displayArea = json.displayArea;
+       json = newJson;
+    }
+
     if(!json) {console.log("No ComponentHASH ",subject); return;}
     // default color,orientation,position
     json = this.getDefaults(json);
@@ -98,10 +116,10 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
 //    }
 
     // DATASOURCE
-    let dataSource = typeof json.dataSource==="string" ?await this.getComponentHash(json.dataSource) : json.dataSource ;
+    let dataSource = (typeof json.dataSource==="string") ?await this.getComponentHash(json.dataSource) : json.dataSource ;
     if(dataSource && dataSource.type==='SparqlQuery') {
       let endpoint = dataSource.endpoint;
-      let query = dataSource.query;
+      let query = dataSource.query.replace(/\$\{[^\}]*\}/g,'');
       json.parts = await this.sparqlQuery(endpoint,query,json);
       if(json.type==='SparqlQuery') return json.parts;
     }
@@ -123,6 +141,9 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     }
     else if(json.type && json.type.match(/Link/)){
       return await window.displayLink(element,json,element);
+    }
+    else if(json.type && json.type.match(/ButtonListMenu/)){
+      return await buttonListMenu(json);
     }
     else if(json.type==='Menu'){
       return await (new Menu()).render(this,json,element);
@@ -236,19 +257,58 @@ this.log('Parts for Component',results);
       return contentWrapper ;
     
   }
-  async getComponentHash(subject,hash){
+getObjects(store,s,p,g){
+  let list = store.each(s,p,null,g);
+  if(list.length===0) return list
+  let type = list[0].termType;
+  let isFirst = store.any(list[0],this.rdf('first'));
+  if(type==="Collection") return list[0].elements;
+  else {
+    if(!isFirst) return list;
+    else {
+      return this.getRdfsList(store,list[0]);
+    }
+  }
+}
+getRdfsList(store,first,list){
+  list ||= [];
+  list.push( store.any(first,this.rdf('first')) );
+  let rest = store.any(first,this.rdf('rest'));
+  if(rest && rest.value===this.rdf('nil').value) {
+    return list;
+  }
+  else {
+   return this.getRdfsList(store,rest,list)
+  }
+}
+  
+async getComponentHash(subject,hash){
+    if(!subject) return hash;
     subject = await this.loadUnlessLoaded(subject);
     if(!subject) return null;
     let predicatePhrases = UI.store.match(subject,null,null);
-    if(subject.doc){
-      let thisdoc = UI.store.match(null,null,null,subject.doc())
-    }
+/*
+    let thisdoc = UI.store.match(subject,null,null,subject.doc())
+    let isComponent = UI.store.any(subject,this.rdf('type'),this.ui('Component'));
+  //  console.log(66,subject.value,isComponent)
+*/
     hash = hash || {}
     for(let p of predicatePhrases){
       let pred = p.predicate.value.replace(/http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#/,'').replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
       let obj = p.object;
-	if(obj.termType==="BlankNode"){
+      let items = this.getObjects(UI.store,subject,p.predicate,subject.doc());
+      hash[pred] ||= [];
+/*
+      for(let item of items){
+//console.log(55,p.predicate.value,item)
+//let x = await this.getComponentHash(item,hash);
+        hash[pred].push(item.value);
+      }
+*/
+      if(obj.termType==="BlankNode"){
+console.log(6,obj)
         obj = await this.getComponentHash(obj);
+console.log(66,obj)
         if(!hash[pred])  hash[pred] = obj;
         else if(typeof hash[pred] !='ARRAY') hash[pred] = [obj]
         else hash[pred].push(obj);
@@ -262,6 +322,7 @@ this.log('Parts for Component',results);
         }
       }
       else {
+console.log(8,obj)
         obj = obj.value.replace(/^http:\/\/www.w3.org\/ns\/ui#/,'');
         if(!hash[pred])  hash[pred] = obj;
         else if(typeof hash[pred] !='ARRAY') hash[pred] = [obj]

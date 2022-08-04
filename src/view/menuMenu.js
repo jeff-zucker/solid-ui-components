@@ -1,12 +1,12 @@
 export async function menuOfMenus(json){
-    if(typeof json==='string'){
-      json = await solidUI.processComponent(element,json);
-    }
     let div = document.createElement('DIV');
     div.id =  json.contentSource.replace(/.*\#/,'');
     let html = "";
+console.log(222,json);
     for(let ds of json.dataSource){
-      html += `<button about="${ds.id}">${ds.label}</button>`;
+      let component = ds.directDisplay ?ds.dataSource :ds.id
+      ds.directDisplay ||= "";
+      html += `<button about="${component}" data-directDisplay="${ds.directDisplay}">${ds.label}</button>`;
     }
     div.innerHTML = html;
     let targetElement = document.querySelector(json.contentArea);
@@ -25,6 +25,10 @@ export async function menuOfMenus(json){
       let tag  = button.getAttribute('about');
       button.addEventListener('click',async(e)=>{
         e.preventDefault();
+        if(button.getAttribute('data-directDisplay')){
+          await solidUI.showPage(null,{link:button.getAttribute('about'),displayArea:targetElement}); 
+          return;
+        }
         let divs = targetElement.querySelectorAll(json.contentArea + ' > DIV');
         for(let d of divs){
           let target = d.getAttribute('data-suic');

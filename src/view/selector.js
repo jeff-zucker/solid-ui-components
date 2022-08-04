@@ -8,8 +8,8 @@
   export async function containerSelector(json){
     let url = json.dataSource;
     let targetSelector = json.contentArea;
-    let collectionSize = json.collectionSize;
-    let resourceSize = json.resourceSize;
+    let collectionSize = json.collectionSize || 6;
+    let resourceSize = json.resourceSize || 12;
     let resourceOnchange = async (e)=>{await solidUI.showPage(e,json)};
     const ldp = UI.rdf.Namespace("http://www.w3.org/ns/ldp#");
     if(!url) return "";

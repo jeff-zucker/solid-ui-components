@@ -110,7 +110,7 @@ newElement(tag,id,classList,value){
   }
 
   findType(uri,string){
-    uri ||= sourceFile;
+    if(!uri && typeof sourceFile != "undefined") uri = sourceFile;
     let type = uri.replace(/\#.*/,'').replace(/\?.*/,'').replace(/.*\./,'');
     if(type.match(/(md)|(markdown)/)) return "markdown";
     if(type.match(/(dot)|(gv)/)) return "graphviz";
@@ -120,6 +120,11 @@ newElement(tag,id,classList,value){
   }
 
   async show(type,uri,string,targetSelector,forceReload){
+    document.getElementById('right-column').style.display="block";
+    document.getElementById('right-column-tabulator').style.display="none";
+    if(targetSelector && typeof targetSelector != "string"){
+      targetSelector = targetSelector.id;
+    }
     type ||= "";
     if(type.match(/(turtle)|(rdf)|(n3)/)) type = "rdf";
     if(type.match(/image/)) type = "image";
@@ -187,15 +192,26 @@ newElement(tag,id,classList,value){
     div.innerHTML = parsedString;
     return div; 
   },
-  SolidOSlink(url){
-      // HIDE OTHER document.getElementById('mainMain').style.display="none";
+  Component : ()=>{
+    //alert("utils.js Component")
+  },
+  SolidOSLink(url){
+      document.getElementById('right-column').style.display="none";
+      document.getElementById('right-column-tabulator').style.display="block";
       const targetElement = document.getElementById('suicTabulator')
       targetElement.style.display="block";
       const targetOutline = targetElement.querySelector('#outline');
       let subject = UI.rdf.sym(url);
-      //let wantedPane = json.pane ?panes.byName(json.pane) :null;
-      setHistory(window.orgin+'/s/solid-content-manager/index.html?uri='+url);
+      let wp= UI.rdf.sym(solidUI.util.UIO('pane'));
+      let wantedPane = (UI.store.any(subject,wp)||"").value;
+      if(wantedPane && wantedPane !="undefined") wantedPane = panes.byName(wantedPane);
+      const params = new URLSearchParams(location.search)
+      url = url.uri ?url.uri :url;
+      params.set('uri', url);
+//    setHistory(window.orgin+'/s/solid-content-manager/index.html?uri='+url);
+      let thisApp = '/cm/'
       window.outliner.GotoSubject(subject,true,wantedPane,true,null,targetOutline);
+      window.history.replaceState({}, '', `${thisApp}?${params}`);
       return;
   },
   Form : async(subject,targetSelector,forceReload)=>{
@@ -203,6 +219,7 @@ newElement(tag,id,classList,value){
     if(uri.value) uri = uri.value;
     const form = await (await new Form()).render({ form:subject.value });
     if(targetSelector){
+if(!targetSelector.startsWith('#')) targetSelector = '#'+targetSelector;
       document.querySelector(targetSelector).innerHTML = "";
       document.querySelector(targetSelector).appendChild(form);
       // return await this.showIframeSrcDoc( form.outerHTML, targetSelector );
@@ -214,6 +231,7 @@ newElement(tag,id,classList,value){
   SparqlQuery : async(subject,targetSelector,forceReload)=>{
     let e = (UI.store.any(subject,this.UIO('endpoint'),null)||"").value;
     let q = (UI.store.any(subject,this.UIO('query'),null)||"").value;
+    q = q.replace(/\$\{[^\}]*\}/g,'');
     let table = (new Table()).render({
       parts : await (new Sparql()).sparqlQuery(e,q,forceReload),
       cleanNodes : true,
@@ -297,6 +315,7 @@ alert(x)
       let node = mainSubject;
       await this.crossLoad(uri,string,forceReload);
       let subjectType = this.getUItype(mainSubject);
+      subjectType ||= 'SolidOSLink';
       if(subjectType && this._show[subjectType]) {
         return await this._show[subjectType](mainSubject,targetSelector,forceReload);
       }

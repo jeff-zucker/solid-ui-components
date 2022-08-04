@@ -58,6 +58,7 @@ export class Form {
       UI.widgets.appendForm(dom, container, {}, subject, form, doc, script);
     }
     catch(e){
+       // console.log(dom,container,subject,form,doc)
        container.innerHTML = "FORM ERROR:"+e;
     }  
     return container;
