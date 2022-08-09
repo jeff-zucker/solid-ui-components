@@ -2,7 +2,6 @@ export async function menuOfMenus(json){
     let div = document.createElement('DIV');
     div.id =  json.contentSource.replace(/.*\#/,'');
     let html = "";
-console.log(222,json);
     for(let ds of json.dataSource){
       let component = ds.directDisplay ?ds.dataSource :ds.id
       ds.directDisplay ||= "";

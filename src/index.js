@@ -61,7 +61,6 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     targetElement ||= document;
     let elm = typeof selector==="string" ?document.querySelector(selector) :selector;
     let c = await this.getComponentHash(elm.getAttribute('data-suic'));
-console.log(selector,c);
     if(elm.innerHTML.replace(/\s*/g,'').length === 0) {
       const content = await this.processComponent(elm);
       elm = content;
@@ -73,13 +72,13 @@ console.log(selector,c);
     return elm;
   }
 
-  async showPage(event,json){
+  async showPage(event,json,obj){
      event ||= {dataset:{}};
      json ||= {};
      let url = event.href || event.value || json.link || json['data'];
      let type = event.dataset.contentType || u.findType(url)
-     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea);
-     let content =  await u.show(type,url,"",json.displayArea)
+     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea,obj);
+     let content =  await u.show(type,url,"",json.displayArea,obj)
      return content;
   }
 
@@ -306,9 +305,7 @@ async getComponentHash(subject,hash){
       }
 */
       if(obj.termType==="BlankNode"){
-console.log(6,obj)
         obj = await this.getComponentHash(obj);
-console.log(66,obj)
         if(!hash[pred])  hash[pred] = obj;
         else if(typeof hash[pred] !='ARRAY') hash[pred] = [obj]
         else hash[pred].push(obj);
@@ -322,7 +319,6 @@ console.log(66,obj)
         }
       }
       else {
-console.log(8,obj)
         obj = obj.value.replace(/^http:\/\/www.w3.org\/ns\/ui#/,'');
         if(!hash[pred])  hash[pred] = obj;
         else if(typeof hash[pred] !='ARRAY') hash[pred] = [obj]

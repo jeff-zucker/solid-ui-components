@@ -16,7 +16,7 @@ export async function buttonListMenu(json){
       b.addEventListener('click',async(e)=>{
         e.preventDefault();
         let link = b.getAttribute('data-link') || b.getAttribute('data-dataSource')
-        await solidUI.showPage(null,{link,displayArea:targetElement}); 
+        await solidUI.showPage(null,{link,displayArea:targetElement},ds); 
       });
       div.appendChild(b)
     }

@@ -119,7 +119,7 @@ newElement(tag,id,classList,value){
     return "unknown";
   }
 
-  async show(type,uri,string,targetSelector,forceReload){
+  async show(type,uri,string,targetSelector,forceReload,obj){
     document.getElementById('right-column').style.display="block";
     document.getElementById('right-column-tabulator').style.display="none";
     if(targetSelector && typeof targetSelector != "string"){
@@ -134,7 +134,7 @@ newElement(tag,id,classList,value){
     if(type.match(/(javascript|json|text)/)) type = "text";
     type = type.replace(/.*\//,'');
     if(this._show[type])
-       return await this._show[type](uri,string,targetSelector,forceReload);
+       return await this._show[type](uri,string,targetSelector,forceReload,obj);
   }
 
   _show = {
@@ -193,18 +193,19 @@ newElement(tag,id,classList,value){
     return div; 
   },
   Component : ()=>{
-    //alert("utils.js Component")
+    alert("utils.js Component")
   },
-  SolidOSLink(url){
+  SolidOSLink : async (url,targetSelector,forceReload,obj)=>{
       document.getElementById('right-column').style.display="none";
       document.getElementById('right-column-tabulator').style.display="block";
       const targetElement = document.getElementById('suicTabulator')
       targetElement.style.display="block";
       const targetOutline = targetElement.querySelector('#outline');
       let subject = UI.rdf.sym(url);
-      let wp= UI.rdf.sym(solidUI.util.UIO('pane'));
-      let wantedPane = (UI.store.any(subject,wp)||"").value;
-      if(wantedPane && wantedPane !="undefined") wantedPane = panes.byName(wantedPane);
+//      await UI.store.fetcher.load(subject);
+//      let wp= solidUI.util.UIO('pane');
+//      let wantedPane = (UI.store.any(subject,wp)||"").value
+      let wantedPane = obj && obj.pane ?panes.byName(obj.pane) :null;
       const params = new URLSearchParams(location.search)
       url = url.uri ?url.uri :url;
       params.set('uri', url);
@@ -309,15 +310,17 @@ alert(x)
     return div;
 */
   },
-  rdf : async (uri,string,targetSelector,forceReload) => {
+  rdf : async (uri,string,targetSelector,forceReload,obj) => {
     try {
       let mainSubject = UI.rdf.sym( uri.match(/\#/) ?uri :uri+"#this" );
       let node = mainSubject;
       await this.crossLoad(uri,string,forceReload);
       let subjectType = this.getUItype(mainSubject);
-      subjectType ||= 'SolidOSLink';
       if(subjectType && this._show[subjectType]) {
         return await this._show[subjectType](mainSubject,targetSelector,forceReload);
+      }
+      else {
+        return await this._show.SolidOSLink(UI.rdf.sym(uri),targetSelector,forceReload,obj);
       }
       let subjects = UI.store.each(null,null,null,node.doc());
       let visitedSubject = {}

@@ -27,7 +27,7 @@ export class Form {
       resultDocument : u.getProperty(node,'ui:formResultDocument'),
     });
   }
-  async render(o){
+async render(o){
     const dom = o.dom || document;
     const container = document.createElement("DIV");
     container.classList.add('uic-form');
@@ -53,7 +53,9 @@ export class Form {
     const title = document.createElement("H2");
     let doc = o.formResultDocument;
     if(subject && !doc && subject.doc) doc = subject.doc();
-    const script = o.script || function(){};
+    const script = o.script || function (){
+      UI.store.fetcher.putBack(subject) // tempory work-around ui:ordered bug
+    };
     try {
       UI.widgets.appendForm(dom, container, {}, subject, form, doc, script);
     }
