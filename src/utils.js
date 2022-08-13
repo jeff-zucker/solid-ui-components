@@ -1,4 +1,12 @@
 /*
+  NON-RDF 
+   image pdf video audio text html graphviz markdown
+  RDF
+   SolidOSLink Form SparqlQuery DataTemplate PageDefinition 
+*/
+
+
+/*
   show[rdf|markdown|graphviz](uri,string,targetSelector)
   mungeLabel(label)
   PUT(url,content,contentType)
@@ -120,12 +128,23 @@ newElement(tag,id,classList,value){
   }
 
   async show(type,uri,string,targetSelector,forceReload,obj){
+    if(solidUI.hideTabulator) solidUI.hideTabulator();
     document.getElementById('right-column').style.display="block";
     document.getElementById('right-column-tabulator').style.display="none";
     if(targetSelector && typeof targetSelector != "string"){
       targetSelector = targetSelector.id;
     }
-    type ||= "";
+    /*
+     NEW
+    */
+/*
+    type = type ?type.replace(/.*\//,'') :null;
+    if(!type || !type.match(/html/)) type = "rdf";
+    return await this._show[type](uri,string,targetSelector,forceReload,obj);
+*/
+    /*
+     OLD
+    */
     if(type.match(/(turtle)|(rdf)|(n3)/)) type = "rdf";
     if(type.match(/image/)) type = "image";
     if(type.match(/video/)) type = "video";
@@ -146,21 +165,21 @@ newElement(tag,id,classList,value){
     if(targetSelector) return this.showIframeSrc(uri,targetSelector);
   },
   video : async(uri,string,targetSelector) => {
-    if(targetSelector) return this.showIframeSrcDoc(`<video controls="yes" src="`+uri+`" style="max-width:100vw;max-height:100vh"></video>`,targetSelector);
+    if(targetSelector) return this.showIframeSrcDoc(`<video controls="yes" src="`+uri+`" style="max-width:100vw;max-height:100vh"></video>`,uri,targetSelector);
   },
   audio : async(uri,string,targetSelector) => {
-    if(targetSelector) return this.showIframeSrcDoc(`<audio controls="yes" src="`+uri+`" style="margin-top:2em;"></audio>`,targetSelector);
+    if(targetSelector) return this.showIframeSrcDoc(`<audio controls="yes" src="`+uri+`" style="margin-top:2em;"></audio>`,uri,targetSelector);
   },
   text : async (uri,string,targetSelector) => {
     string ||= (await this.loadFile(uri)).body;
-    if(targetSelector) return this.showIframeSrcDoc(string,targetSelector);
+    if(targetSelector) return this.showIframeSrcDoc(string,uri,targetSelector);
     let div = document.createElement("DIV");
     div.innerHTML = string;
     return div;
   },
   html : async (uri,string,targetSelector) => {
     string ||= (await this.loadFile(uri)).body;
-    if(targetSelector) return this.showIframeSrcDoc(string,targetSelector);
+    if(targetSelector) return this.showIframeSrcDoc(string,uri,targetSelector);
     let div = document.createElement("DIV");
     div.innerHTML = string;
     return div;
@@ -186,7 +205,7 @@ newElement(tag,id,classList,value){
     // string ||= await this.loadFile(uri);
     let parsedString = marked.parse(string);
     if(targetSelector){
-      return this.showIframeSrcDoc(parsedString,targetSelector);
+      return this.showIframeSrcDoc(parsedString,uri,targetSelector);
     }
     let div = document.createElement("DIV");
     div.innerHTML = parsedString;
@@ -196,8 +215,12 @@ newElement(tag,id,classList,value){
     alert("utils.js Component")
   },
   SolidOSLink : async (url,targetSelector,forceReload,obj)=>{
-      document.getElementById('right-column').style.display="none";
+    if(solidUI.showTabulator) solidUI.showTabulator();
+/*
+//      document.getElementById('right-column').style.display="none";
+      document.getElementById('display').style.display="none";
       document.getElementById('right-column-tabulator').style.display="block";
+*/
       const targetElement = document.getElementById('suicTabulator')
       targetElement.style.display="block";
       const targetOutline = targetElement.querySelector('#outline');
@@ -255,7 +278,7 @@ if(!targetSelector.startsWith('#')) targetSelector = '#'+targetSelector;
       interpolated += template.interpolate(row);
     }
     if(targetSelector) {
-      this.showIframeSrcDoc(interpolated,targetSelector);
+      this.showIframeSrcDoc(interpolated,subject,targetSelector);
     }
     let div = document.createElement("DIV");
     div.innerHTML = interpolated;
@@ -288,7 +311,7 @@ if(!targetSelector.startsWith('#')) targetSelector = '#'+targetSelector;
         dom.querySelector('#'+label).appendChild( await this.show(i.contentType,url) );
     }
     dom = XS.serializeToString(dom);    
-    if(targetSelector) await this.showIframeSrcDoc(dom,targetSelector);
+    if(targetSelector) await this.showIframeSrcDoc(dom,url,targetSelector);
     return dom;
 /*
     let div = document.createElement("DIV");
@@ -316,7 +339,8 @@ alert(x)
       let node = mainSubject;
       await this.crossLoad(uri,string,forceReload);
       let subjectType = this.getUItype(mainSubject);
-      if(subjectType && this._show[subjectType]) {
+      if(subjectType && subjectType.match(/(Form)/)) {
+//OLD      if(subjectType && this._show[subjectType]) {
         return await this._show[subjectType](mainSubject,targetSelector,forceReload);
       }
       else {
@@ -337,7 +361,7 @@ alert(x)
         }
       }
       if(targetSelector) {
-        return this.showIframeSrcDoc(str,targetSelector);
+        return this.showIframeSrcDoc(str,uri,targetSelector);
       }
       let div = document.createElement("DIV");
       div.innerHTML = str;
@@ -359,7 +383,7 @@ async dataTemplate2Iframe(mainSubject,targetSelector){
   for(let row of data.reverse()){
     interpolated += template.interpolate(row);
   }
-  this.showIframeSrcDoc(interpolated,targetSelector);
+  this.showIframeSrcDoc(interpolated,mainSubject,targetSelector);
   return interpolated;
 }
 async template2Iframe(mainSubject,targetSelector){
@@ -402,10 +426,14 @@ showIframeSrc(src,targetSelector){
   if(targetSelector) this.show_iframe(iframe,targetSelector);
   else return iframe;
 }
-showIframeSrcDoc(string,targetSelector){
+showIframeSrcDoc(content,uri,targetSelector){
   let iframe = this.makeIframe();
-  iframe.srcdoc = string;
-  this.show_iframe(iframe,targetSelector);
+   content = content.replace(/X-Frame-Options/g,'');
+   uri = new URL(uri);
+   const b = `<base href="${uri.origin}${uri.pathname}">`; // <base target="_BLANK" />`;
+   iframe.srcdoc = `<body>${b}${content}</body>`
+   iframe.scrollTo({ top: 0, behavior: "smooth" });
+   this.show_iframe(iframe,targetSelector);
 }
 
   /* makeSelector(options,onchange,selected,targetSelector,size,)
@@ -518,17 +546,18 @@ async crossLoad(uri,string,forceReload){
 async loadFile(uri){
   let fileInfo = this.fileInfo(uri);
   try {
-     let response = await UI.store.fetcher.webOperation("GET",uri);
+     // OMIT CREDENTIALS NEEDED FOR MOST FETCHES
+     let response = await UI.store.fetcher.webOperation("GET",uri,{credentials:"omit"});
      if(response.ok) {
        fileInfo.contentType = response.headers.get("Content-Type");
        fileInfo.editable = !fileInfo.contentType.match(/(image|video|audio|pdf|unknown)/);
        fileInfo.body = response.responseText;
        fileInfo.ok=response.ok
      }
-     else alert(response.status)
+     else alert("utils.loadFile() "+response.status)
      return fileInfo
   }
-  catch(e) { alert(e); return fileInfo }
+  catch(e) { alert("network loadFile() "+e); return fileInfo }
 }
 
 getUItype(subject){

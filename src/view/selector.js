@@ -5,7 +5,7 @@
        collectionSize
        resourceSize
   */
-  export async function containerSelector(json){
+export async function containerSelector(json){
     let url = json.dataSource;
     let targetSelector = json.contentArea;
     let collectionSize = json.collectionSize || 6;
@@ -35,8 +35,6 @@
       }
     }
     let x = ()=>{};
-    let hostEl = document.createElement('DIV');
-    hostEl.innerHTML = host;
     let containerOnchange = async (selectorElement)=>{
        let newContainer = selectorElement.value;
        json.dataSource = newContainer;
@@ -48,6 +46,16 @@
     if(resources) resources.classList = ["resourceSelector"];
     if(targetSelector && typeof targetSelector==="string") targetSelector = document.querySelector(targetSelector);
     let div = targetSelector ?targetSelector :document.createElement('DIV');
+    let hostEl = document.createElement('DIV');
+    hostEl.style = "width:100%;";
+    hostEl.innerHTML = `
+       <span>${host}</span>
+<!--
+       <span style="display:inline-block;text-align:right">
+          <a href="${container}" onclick="solidUI.showPageOSLink">x</a>
+       </span>
+-->
+    `
     div.innerHTML = "";
     div.appendChild(hostEl);    
     div.appendChild(containers);    
@@ -83,6 +91,13 @@
     try{ 
       let p = new URL(path); 
       return p.host
+    }
+    catch(e){console.log(path,e); return path }; 
+  }
+  function _origin(path){
+    try{ 
+      let p = new URL(path); 
+      return p.origin
     }
     catch(e){console.log(path,e); return path }; 
   }
@@ -145,7 +160,8 @@
 //         label = label.replace(/.*\//,'')
 //      label ||= "/";
       let optionEl = document.createElement('OPTION');
-      optionEl.value = optionEl.title = value;
+      optionEl.value = value;
+      optionEl.title = value+"\n"+(option.contentType||"");
       optionEl.innerHTML = label;
       optionEl.style = "padding:0.25em;";
       optionEl = addAttributes(option,optionEl);

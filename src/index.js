@@ -73,6 +73,7 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
   }
 
   async showPage(event,json,obj){
+     if(event.preventDefault) event.preventDefault();
      event ||= {dataset:{}};
      json ||= {};
      let url = event.href || event.value || json.link || json['data'];
@@ -116,6 +117,23 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
 
     // DATASOURCE
     let dataSource = (typeof json.dataSource==="string") ?await this.getComponentHash(json.dataSource) : json.dataSource ;
+    if(typeof dataSource.dataSource==="string"){
+      dataSource = await this.getComponentHash(dataSource.dataSource);
+    }
+    if(dataSource && dataSource.type==='Script') {
+      let as=await Function('"use strict";return('+dataSource.content+')')();
+      let el = document.querySelector(json.contentArea);
+      for(let anchor of as){
+        anchor.target = json.displayArea;
+        anchor.addEventListener('click',async (e)=>{
+          e.preventDefault();
+          anchor.setAttribute('data-contentType','text/html');
+          await u.show('text/html',anchor.href,null,json.displayArea);
+        });
+        el.classList.add('suic-anchor-list');
+        el.appendChild(anchor);      
+      }
+    }
     if(dataSource && dataSource.type==='SparqlQuery') {
       let endpoint = dataSource.endpoint;
       let query = dataSource.query.replace(/\$\{[^\}]*\}/g,'');
@@ -135,6 +153,7 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
       json.parts = sparql.flatten(json.parts,json.groupOn)
       console.log(json.groupOn,json.parts)
     }
+
     if(json.type==='App'){
       return await (new App()).render(this,json);
     }
