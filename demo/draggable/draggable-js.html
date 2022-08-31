@@ -1,0 +1,32 @@
+<script src="https://solidcommunity.net/mashlib.min.js" type="module"></script>
+<script src="https://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
+<script src="../../dist/solid-ui-components.bundle.js" type="module"></script>
+
+ <script type="module"> 
+    async function showDraggables() {
+      /*
+        SHOW A DRAGGABLE CONTAINER FROM A SCRIPT
+      */
+      document.body.appendChild(await solidUI.draggable({
+                 label : "Draggable Container",
+        dataSourceType : "SolidOSLink",
+                  pane : "folder",
+                  href : "https://jeff-zucker.solidcommunity.net/public/test/"
+      }));
+      /*
+        SHOW A HARD-CODE DRAGGABLE FROM A SCRIPT
+      */
+      document.body.appendChild(await solidUI.draggable({
+                 label : "Draggable Hard-Coded Content",
+        dataSourceType : "HardCoded",
+               content : "This is some stuff",
+                 style : "left:300px",
+           headerStyle : "background:#a0a0a0",
+      }));
+    }
+    showDraggables();
+  </script>
+
+<script type="module">solidUI.init()</script>
+
+
