@@ -36,7 +36,7 @@ export async function containerSelector(json){
     }
     let x = ()=>{};
     let containerOnchange = async (selectorElement)=>{
-       let newContainer = selectorElement.value;
+       let newContainer = selectorElement.target.value;
        json.dataSource = newContainer;
        return await containerSelector(json);
     };
@@ -47,19 +47,20 @@ export async function containerSelector(json){
     if(targetSelector && typeof targetSelector==="string") targetSelector = document.querySelector(targetSelector);
     let div = targetSelector ?targetSelector :document.createElement('DIV');
     let hostEl = document.createElement('DIV');
-    hostEl.style = "width:100%;";
+    hostEl.style = "width:100% !important;text-align:right";
     hostEl.innerHTML = `
-       <span>${host}</span>
-<!--
-       <span style="display:inline-block;text-align:right">
-          <a href="${container}" onclick="solidUI.showPageOSLink">x</a>
-       </span>
--->
-    `
+       <span style="text-align:left">${host}</span>
+       <a href="${container}" style="display:inline-block !important;color:gold !important;text-align:right !important;"><img src="https://solidproject.org/assets/img/solid-emblem.svg" style="height:2rem;width:2rem;margin-left:2rem;" /></a>
+    `;
+    hostEl.querySelector('A').addEventListener('click',(e)=>{
+alert(e)
+      e.preventDefault();
+      solidUI.showPage(e,{link:container,displayArea:json.displayArea});
+    });
     div.innerHTML = "";
-    div.appendChild(hostEl);    
-    div.appendChild(containers);    
-    div.appendChild(resources);    
+    if(hostEl) div.appendChild(hostEl);    
+    if(containers) div.appendChild(containers);    
+    if(resources) div.appendChild(resources);    
     return div;
   }
 
@@ -67,7 +68,7 @@ export async function containerSelector(json){
     const isa = UI.rdf.sym("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
     let types = UI.store.each(fileNode,isa).map((s)=>{return s.value});
     for(let type of types){
-      if(type.match(/http:\/\/www.w3.org\/ns\/iana\/media-types/))
+       if(type.match(/http:\/\/www.w3.org\/ns\/iana\/media-types/))
        return type.replace(/http:\/\/www.w3.org\/ns\/iana\/media-types\//,'').replace(/\#Resource/,'');
     }
   }
@@ -141,7 +142,8 @@ export async function containerSelector(json){
       button.value = options[0].value;
       button.innerHTML = mungeLabel(options[0].label);
       button.addEventListener('click',(e)=>{
-        onchange(e.target)
+        onchange(e)
+//        onchange(e.target)
       })
       return button;
     }
@@ -162,6 +164,8 @@ export async function containerSelector(json){
       let optionEl = document.createElement('OPTION');
       optionEl.value = value;
       optionEl.title = value+"\n"+(option.contentType||"");
+      optionEl.dataset ||= {};
+      optionEl.dataset.contenttype=option.contentType||"";
       optionEl.innerHTML = label;
       optionEl.style = "padding:0.25em;";
       optionEl = addAttributes(option,optionEl);
@@ -185,7 +189,8 @@ export async function containerSelector(json){
 //      onchange(e.target)
 //    })
     selectEl.addEventListener('change',async(e)=>{
-      onchange(e.target)
+      onchange(e)
+//      onchange(e.target)
     })
     selectEl.size = size
     selectEl.style="padding:0.5em;width:100%"

@@ -1,0 +1,62 @@
+@prefix : <#>.
+@prefix ui: <http://www.w3.org/ns/ui#>.
+
+# NOTEPAD
+#
+:NotepadButton
+  a ui:ComponentButton;
+  ui:label "Notepad"@en;
+  ui:dataSource :NotepadDraggable.
+
+:NotepadDraggable
+  a ui:Draggable;
+  ui:label "Draggable Notepad"@en;
+  ui:style "left:300px;top:1em;";
+  ui:dataSource :NotepadSource.
+
+:NotepadSource 
+  a ui:SolidOSLink;
+  ui:href <https://jeff-zucker.solidcommunity.net/MyNotepad/>.
+
+# CONTAINER
+#
+:ContainerButton
+  a ui:ComponentButton;
+  ui:label "Container"@en;
+  ui:dataSource :ContainerDraggable.
+
+:ContainerDraggable
+  a ui:Draggable;
+  ui:label "Draggable Container"@en;
+  ui:dataSource :ContainerSource.
+
+:ContainerSource
+  a ui:SolidOSLink;
+  ui:pane "folder";
+  ui:href "https://jeff-zucker.solidcommunity.net/public/test/".
+
+# QUERY
+#
+:QueryButton
+  a ui:ComponentButton; ui:label "Query"@en; ui:dataSource :QueryDraggable.
+
+:QueryDraggable
+  a ui:Draggable;
+  ui:label "Draggable Query Results"@en;
+  ui:dataSource :QueryTable.
+
+:QueryTable
+  a ui:Table;
+  ui:dataSource :QuerySource.
+
+:QuerySource
+  a ui:SparqlQuery;
+  ui:endpoint <test-data.ttl>;
+  ui:query """
+    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    SELECT ?Name ?Age WHERE {
+      ?x a foaf:Person;
+         foaf:name ?Name; 
+         foaf:age ?Age.
+    }
+  """.

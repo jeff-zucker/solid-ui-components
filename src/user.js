@@ -102,6 +102,7 @@ import {Feed} from './model/rss.js';
     } 
   }
   window.displayLink = async function( e, item, element ){
+alert('user.js DISPLAY LINK')
     if(typeof item==='string') item = { href:item }
     item.href = item.href || item.link;
     item.type = item.type || 'Link';
@@ -118,6 +119,7 @@ import {Feed} from './model/rss.js';
 
     // IF SOLIDOS LINK, DISPLAY WITH GOTOSUBJECT, RETURN
     if(item.type.startsWith("SolidOS")) {
+      return solidUI.util.show('SolidOSLink',item.href)
       document.getElementById('mainMain').style.display="none";
       const targetElement = document.getElementById('suicTabulator')
       targetElement.style.display="block";

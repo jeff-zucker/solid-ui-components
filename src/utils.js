@@ -119,29 +119,28 @@ newElement(tag,id,classList,value){
 
   findType(uri,string){
     if(!uri && typeof sourceFile != "undefined") uri = sourceFile;
+    if(!uri) return "unknown";
     let type = uri.replace(/\#.*/,'').replace(/\?.*/,'').replace(/.*\./,'');
+    if(!type) return "unknown";
     if(type.match(/(md)|(markdown)/)) return "markdown";
     if(type.match(/(dot)|(gv)/)) return "graphviz";
     if(type.match(/(ttl)|(rdf)|(n3)/)) return "rdf";
     if(type.match(/(html)|(css)|(js)/)) return type;
     return "unknown";
   }
-
   async show(type,uri,string,targetSelector,forceReload,obj){
     if(solidUI.hideTabulator) solidUI.hideTabulator();
-    document.getElementById('right-column').style.display="block";
-    document.getElementById('right-column-tabulator').style.display="none";
     if(targetSelector && typeof targetSelector != "string"){
-      targetSelector = targetSelector.id;
+//      targetSelector = targetSelector.id;
     }
     /*
-     NEW
+     NEW (NO ACE)
     */
-/*
+
     type = type ?type.replace(/.*\//,'') :null;
     if(!type || !type.match(/html/)) type = "rdf";
     return await this._show[type](uri,string,targetSelector,forceReload,obj);
-*/
+
     /*
      OLD
     */
@@ -214,29 +213,41 @@ newElement(tag,id,classList,value){
   Component : ()=>{
     alert("utils.js Component")
   },
-  SolidOSLink : async (url,targetSelector,forceReload,obj)=>{
+  SolidOSLink : async (url,string,targetSelector,forceReload,obj)=>{
+    url ||= obj.href;
     if(solidUI.showTabulator) solidUI.showTabulator();
-/*
-//      document.getElementById('right-column').style.display="none";
-      document.getElementById('display').style.display="none";
-      document.getElementById('right-column-tabulator').style.display="block";
-*/
-      const targetElement = document.getElementById('suicTabulator')
-      targetElement.style.display="block";
-      const targetOutline = targetElement.querySelector('#outline');
+      let targetElement = document.getElementById('suicTabulator') || targetSelector
+      if(targetElement) targetElement.style.display="block";
+      let targetOutline = targetElement ?targetElement.querySelector('#outline') || targetElement.querySelector('.outline') :null;
+      if(!targetOutline) {
+        targetElement=makeOutline();
+        targetOutline =  targetElement.querySelector('.outline') ;
+      }
       let subject = UI.rdf.sym(url);
-//      await UI.store.fetcher.load(subject);
-//      let wp= solidUI.util.UIO('pane');
-//      let wantedPane = (UI.store.any(subject,wp)||"").value
-      let wantedPane = obj && obj.pane ?panes.byName(obj.pane) :null;
+      // let wantedPane = obj && obj.pane ?panes.byName(obj.pane) :null;
+      let wantedPane = obj && obj.pane ?obj.pane :null;
+      let plugin = obj ?obj.plugin :"";
+      plugin ||= "";
+      let displayTarget = obj ?obj.displayTarget :"";
+      if(plugin.match(/ProfileEditor/)) wantedPane = "editProfile";
+      if(plugin.match(/PreferencesEditor/)) wantedPane = "basicPreferences";
+      wantedPane = wantedPane ?panes.byName(wantedPane) :null;
       const params = new URLSearchParams(location.search)
       url = url.uri ?url.uri :url;
       params.set('uri', url);
-//    setHistory(window.orgin+'/s/solid-content-manager/index.html?uri='+url);
+      //setHistory(window.orgin+'/cm/?uri='+url);
       let thisApp = '/cm/'
       window.outliner.GotoSubject(subject,true,wantedPane,true,null,targetOutline);
-      window.history.replaceState({}, '', `${thisApp}?${params}`);
-      return;
+//      window.history.replaceState({}, '', `${thisApp}?${params}`);
+      return targetOutline;
+      function makeOutline(){
+        let div = document.createElement('DIV');
+        div.classList.add('TabulatorOutline');
+        let table = document.createElement('TABLE');
+        table.classList.add('outline');
+        div.appendChild(table);
+        return div;
+      }
   },
   Form : async(subject,targetSelector,forceReload)=>{
     let uri = subject.doc ?subject.doc() :subject;
@@ -334,6 +345,9 @@ alert(x)
 */
   },
   rdf : async (uri,string,targetSelector,forceReload,obj) => {
+    if(obj.dataSourceType){
+        return await this._show[obj.dataSourceType](uri,string,targetSelector,forceReload,obj);
+    }
     try {
       let mainSubject = UI.rdf.sym( uri.match(/\#/) ?uri :uri+"#this" );
       let node = mainSubject;

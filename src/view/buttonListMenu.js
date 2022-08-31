@@ -6,7 +6,6 @@ export async function buttonListMenu(json){
       let attrs = "";
       if(!ds.dataSource) {
         ds = await solidUI.getComponentHash(ds);
-//      ds = await solidUI.getComponentHash(ds.id); // prior to getComp change
       }
       let b = document.createElement('BUTTON');
       for(let k of Object.keys(ds)){
@@ -16,7 +15,7 @@ export async function buttonListMenu(json){
       b.addEventListener('click',async(e)=>{
         e.preventDefault();
         let link = b.getAttribute('data-link') || b.getAttribute('data-dataSource')
-        await solidUI.showPage(null,{link,displayArea:targetElement},ds); 
+        await solidUI.showPage(null,{link,displayArea:json.displayArea},ds); 
       });
       div.appendChild(b)
     }

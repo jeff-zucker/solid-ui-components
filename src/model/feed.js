@@ -30,16 +30,21 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
   self.displayArea = displayArea;
 
   const u = new CU();
-  const bookm = UI.rdf.Namespace("http://www.w3.org/2002/01/bookmark#");
-  const rdfs = UI.rdf.Namespace("http://www.w3.org/2000/01/rdf-schema#");
+  const ui = UI.rdf.Namespace("http://www.w3.org/ns/ui#");
+  const skos = UI.rdf.Namespace("http://www.w3.org/2004/02/skos/core#");
+  const rdf = UI.rdf.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
   let targetElement = document.body;
 
   await u.crossLoad(topTopic);
   topTopic = UI.rdf.sym(topTopic);
-  let topicNodes = UI.store.each(null,bookm('subTopicOf'),topTopic)
+//  let topicNodes = UI.store.each(null,bookm('subTopicOf'),topTopic)
+//  let topicNodes = UI.store.each(topTopic,skos('memberList'))
+//  let topicNodes = UI.store.each(topTopic,ui('feedTopicList'))
+  let topicNodes = UI.store.each(null,rdf('type'),ui('FeedTopic'))
+//  topicNodes = topicNodes[0].elements;
   let topics = [];
   for(let n of topicNodes){
-     topics.push([n.value, UI.store.any(n,rdfs('label')).value]);
+     topics.push([n.value, UI.store.any(n,ui('label')).value]);
   }
   let onchange = async(e)=>{await collectionSelector(e)};
   let topicSelector = u.makeSelector(topics,onchange,null,null,3);
@@ -63,11 +68,14 @@ async makeFeedSelector(topTopic,targetSelector,displayArea){
   async function collectionSelector(topTopic,targetElement){
     if(typeof topTopic === "string") topTopic = UI.rdf.sym(topTopic);
     await u.crossLoad(topTopic);
-    let topicNodes = UI.store.each(null,bookm('hasTopic'),topTopic)
+//    let topicNodes = UI.store.each(null,bookm('hasTopic'),topTopic)
+//    let topicNodes = UI.store.each(topTopic,skos('memberList'))
+    let topicNodes = UI.store.each(null,skos('broader'),topTopic)
+//    topicNodes = topicNodes[0].elements;
     let collections = [];
     for(let n of topicNodes){
-       let href = UI.store.any(n,bookm('recalls')).value;
-       let label = UI.store.any(n,rdfs('label')).value;
+       let href = UI.store.any(n,ui('href')).value;
+       let label = UI.store.any(n,ui('label')).value;
        collections.push([href,label]);
     }
     let onchange = async(e)=>{

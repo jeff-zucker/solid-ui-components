@@ -15,7 +15,9 @@ import {Table} from './view/table.js';
 import {Tabs} from './view/tabs.js';
 import {BookmarkTree} from './view/bookmarkTree.js';
 import {containerSelector} from './view/selector.js';
+import {draggable} from './view/draggable.js';
 import {buttonListMenu} from './view/buttonListMenu.js';
+import {componentButton} from './view/componentButton.js';
 import {CU} from './utils.js';
 const u = new CU();
 
@@ -61,6 +63,7 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     targetElement ||= document;
     let elm = typeof selector==="string" ?document.querySelector(selector) :selector;
     let c = await this.getComponentHash(elm.getAttribute('data-suic'));
+    if(c && c.plugin) elm.setAttribute('data-suicPlugin',c.plugin);
     if(elm.innerHTML.replace(/\s*/g,'').length === 0) {
       const content = await this.processComponent(elm);
       elm = content;
@@ -72,14 +75,52 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     return elm;
   }
 
+  pluginType(plugin){
+    if(!plugin || plugin.match(/(PodBrowser,SolidOS,FeedList,ConceptTree)/)) return "builtIn";
+    return "";
+  }
+
   async showPage(event,json,obj){
-     if(event.preventDefault) event.preventDefault();
-     event ||= {dataset:{}};
+console.log('SHOW PAGE')
+     if(event && event.preventDefault) event.preventDefault();
+     event ||= {target:{tagName:""}};
+     event.target.dataset ||= {};
      json ||= {};
+     obj ||= json;
+     let type;
      let url = event.href || event.value || json.link || json['data'];
-     let type = event.dataset.contentType || u.findType(url)
-     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea,obj);
-     let content =  await u.show(type,url,"",json.displayArea,obj)
+     url ||= event.target.value;
+     let plugin = event.target.dataset.suicplugin;
+     if(!plugin && event.target.parentElement){
+        event.target.parentElement.dataset ||= {};
+        plugin = event.target.parentElement.dataset.suicplugin;
+     }
+     if(plugin && this.pluginType(plugin) != "built-in"){
+       let pFile = window.origin + `/cm/plugins/${plugin}.ttl`;
+       await UI.store.fetcher.load(pFile);
+       let node = UI.rdf.sym(pFile+"#this");
+       let x= UI.store.match(node,this.rdf('type'),this.ui('LinkHandler'));
+       if(x && x.length===1){
+         let converter = UI.store.any(node,this.ui('linkConvert'),null,node.doc())
+       url = converter.value.interpolate({href:url});
+         type="text/html";
+       }
+     }
+     type ||= event.target.dataset.contenttype || u.findType(url);
+     if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea,true,obj);
+     let content
+     if(obj.displayTarget && obj.displayTarget.match(/#Draggable/)){
+       let outerContent = (await u.show(type,url,"","",true,obj)).outerHTML;
+       alert(outerContent)
+       await draggable({
+          label : obj.label,
+          content : outerContent,
+       });
+       return;
+     }
+     else {
+       content =  await u.show(type,url,"",json.displayArea,true,obj)
+     }
      return content;
   }
 
@@ -92,14 +133,21 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
       }
       if(!subject) return null;
       json = await this.getComponentHash(subject)
+      element ||= {}
+      element.dataset ||= {};
+      element.parentNode  ||= {};
+      element.parentNode.dataset  ||= {};
       json.displayArea = element.dataset.display || element.parentNode.dataset.display;
       if(element.id) json.contentArea = '#' + element.id ;
       json.contentSource = subject.value ?subject.value :subject ;
     }
     json ||= subject;
-
+    if(!json.plugin && element && element.getAttribute) json.plugin = element.getAttribute('data-suicPlugin') || {};
     if(json.type==="Component"){
-       if(json.dataSource.endsWith('/')) return await containerSelector(json);
+       if(json.plugin.match(/#PodBrowser/))
+         return await containerSelector(json);
+       if(json.plugin.match(/#SolidOSLink/))
+         return u.show('SolidOSLink',json.href,null,null,null,json)
        let newJson = await this.getComponentHash(json.dataSource,json);
        newJson.contentSource = json.dataSource;
        newJson.contentArea = json.contentArea;
@@ -117,7 +165,7 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
 
     // DATASOURCE
     let dataSource = (typeof json.dataSource==="string") ?await this.getComponentHash(json.dataSource) : json.dataSource ;
-    if(typeof dataSource.dataSource==="string"){
+    if(dataSource && typeof dataSource.dataSource==="string"){
       dataSource = await this.getComponentHash(dataSource.dataSource);
     }
     if(dataSource && dataSource.type==='Script') {
@@ -127,7 +175,7 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
         anchor.target = json.displayArea;
         anchor.addEventListener('click',async (e)=>{
           e.preventDefault();
-          anchor.setAttribute('data-contentType','text/html');
+          anchor.setAttribute('data-contenttype','text/html');
           await u.show('text/html',anchor.href,null,json.displayArea);
         });
         el.classList.add('suic-anchor-list');
@@ -143,6 +191,9 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     if(json.type==='SparqlQuery') {
       json.parts = await this.sparqlQuery(json.endpoint,json.query,json);
       if(json.type==='SparqlQuery') return json.parts;
+    }
+    if(json.type==='SolidOSLink') {
+       return u.show('SolidOSLink',json.href,null,null,null,json)
     }
     if(json.type==='AnchorList') {
       for(let l of json.content.split(/\n/) ){
@@ -168,6 +219,12 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     }
     else if(json.type==='MenuOfMenus'){
       return await menuOfMenus(json);
+    }
+    else if(json.type==='ComponentButton'){
+      return await componentButton(json);
+    }
+    else if(json.type==='Draggable'){
+      return await draggable(json);
     }
     else if(json.type==='ContainerSelector'){
       return await containerSelector(json);
@@ -199,6 +256,9 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
     else if(json.type==='Tabset'){
       return await (new Tabs).render(this,json)
     }
+    if(json.type==="Table"){
+      return await (new Table()).render(json);
+    }
     let contentWrapper = document.createElement('DIV');
     let results,before,after,content,label;
 
@@ -225,7 +285,7 @@ this.log('Parts for Component',results);
         if(compo) contentWrapper.appendChild(compo);
         return contentWrapper;
       }
-      if(template=="Table"){
+      if(template=="Table"||json.type==="Table"){
         let compo = await (new Table()).render(json);
         if(compo) contentWrapper.appendChild(compo);
         return contentWrapper;
@@ -314,7 +374,8 @@ async getComponentHash(subject,hash){
     for(let p of predicatePhrases){
       let pred = p.predicate.value.replace(/http:\/\/www.w3.org\/1999\/02\/22-rdf-syntax-ns#/,'').replace(/http:\/\/www.w3.org\/ns\/ui#/,'');
       let obj = p.object;
-      let items = this.getObjects(UI.store,subject,p.predicate,subject.doc());
+      let doc = subject.doc ?subject.doc() :subject;
+      let items = this.getObjects(UI.store,subject,p.predicate,doc);
       hash[pred] ||= [];
 /*
       for(let item of items){
@@ -525,6 +586,7 @@ setDefaults(json){
 
 let solidUI = new SolidUIcomponent();
 solidUI.util = u;
+solidUI.draggable = draggable;
 export default solidUI;
 /*
 document.addEventListener('DOMContentLoaded', function() {    
