@@ -76,7 +76,7 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
   }
 
   pluginType(plugin){
-    if(!plugin || plugin.match(/(PodBrowser,SolidOS,FeedList,ConceptTree)/)) return "builtIn";
+    if(!plugin || plugin.match(/(PodBrowser|SolidOS|FeedList|ConceptTree)/)) return "builtIn";
     return "";
   }
 
@@ -95,7 +95,7 @@ console.log('SHOW PAGE')
         event.target.parentElement.dataset ||= {};
         plugin = event.target.parentElement.dataset.suicplugin;
      }
-     if(plugin && this.pluginType(plugin) != "built-in"){
+     if(plugin && this.pluginType(plugin) != "builtIn"){
        let pFile = window.origin + `/cm/plugins/${plugin}.ttl`;
        await UI.store.fetcher.load(pFile);
        let node = UI.rdf.sym(pFile+"#this");
@@ -111,7 +111,7 @@ console.log('SHOW PAGE')
      let content
      if(obj.displayTarget && obj.displayTarget.match(/#Draggable/)){
        let outerContent = (await u.show(type,url,"","",true,obj)).outerHTML;
-       alert(outerContent)
+//       alert(outerContent)
        await draggable({
           label : obj.label,
           content : outerContent,

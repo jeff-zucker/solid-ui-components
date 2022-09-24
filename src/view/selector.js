@@ -53,7 +53,7 @@ export async function containerSelector(json){
        <a href="${container}" style="display:inline-block !important;color:gold !important;text-align:right !important;"><img src="https://solidproject.org/assets/img/solid-emblem.svg" style="height:2rem;width:2rem;margin-left:2rem;" /></a>
     `;
     hostEl.querySelector('A').addEventListener('click',(e)=>{
-alert(e)
+//alert(e)
       e.preventDefault();
       solidUI.showPage(e,{link:container,displayArea:json.displayArea});
     });

@@ -102,7 +102,7 @@ import {Feed} from './model/rss.js';
     } 
   }
   window.displayLink = async function( e, item, element ){
-alert('user.js DISPLAY LINK')
+// alert('user.js DISPLAY LINK')
     if(typeof item==='string') item = { href:item }
     item.href = item.href || item.link;
     item.type = item.type || 'Link';

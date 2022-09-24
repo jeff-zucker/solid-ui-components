@@ -43,7 +43,7 @@ export async function draggable(thing){
   header.style = component.headerStyle || {};
   header.style.padding ||= "10px";
   header.style.cursor ||= "move";
-  header.style["z-index"] ||= 3;
+  header.style["z-index"] ||= 4;
   header.style["text-align"] ||= "center";
   header.style.background ||= "#2196F3";
   header.style.color ||= "#ffffff";
