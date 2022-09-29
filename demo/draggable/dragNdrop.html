@@ -1,0 +1,163 @@
+<!DOCTYPE html><html><head>
+  <title>My Drag-and-Drop Example</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<style>
+  .parent {
+    border: 2px solid #DFA612;
+    color: black;
+    display: flex;
+    font-family: sans-serif;
+    font-weight: bold;
+  }
+  .dragFromZone {
+    flex-basis: 100%;
+    flex-grow: 1;
+    padding: 10px;
+  }
+  .draggable {
+    background-color: #4AAE9B;
+    font-weight: normal;
+    margin:0.5rem;
+    padding: 10px;
+    max-width:20ch;
+    text-align:center;
+    display:inline-block;
+  }
+  .dropzone {
+    background-color: #6DB65B;
+    flex-basis: 100%;
+    flex-grow: 1;
+    padding: 10px;
+  }
+  h3 {
+    margin:0;
+  }
+  .dndContainer:hover {
+    border : 4px solid blue;
+  }
+</style>
+<script>
+  function onDragStart(event) {
+    event.dataTransfer.setData('text/plain', event.target.id);
+    event.currentTarget.style.backgroundColor = 'yellow';
+  }
+  function onDragOver(event) {
+    event.preventDefault();
+    const dropzone = event.target;
+    dropzone.style.border = "4px solid silver";
+  }
+  function onDrop(event) {
+    const id = event.dataTransfer.getData('text');
+    const dragNum = id.replace(/draggable-/,'')
+    // alert(dragNum>5)
+    const draggableElement = document.getElementById(id);
+    const dropzone = event.target;
+    dropzone.style.border = "2px solid #DFA612";
+    dropzone.appendChild(draggableElement);
+  }
+</script>
+<body>
+  <h1>The App Cupboard</h1>
+  <div class="parent">
+
+    <div class="dragFromZone dndContainer"
+         ondragover="onDragOver(event)"
+         ondrop="onDrop(event)"
+    >
+
+      <div id="draggable-1" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Notepad
+      </div>
+      <div id="draggable-2" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Address Book
+      </div>
+      <div id="draggable-3" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Task Manager
+      </div>
+      <div id="draggable-4" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Chat
+      </div>
+      <div id="draggable-5" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Edit My Profile
+      </div>
+      <div id="draggable-6" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Edit My Preferences
+      </div>
+
+      <div id="draggable-7" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Local Pod (my desktop)
+      </div>
+
+      <div id="draggable-8" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Remote Pod
+      </div>
+
+      <div id="draggable-1" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        News Reader
+      </div>
+
+      <div id="draggable-2" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Open Culture Browser
+      </div>
+
+      <div id="draggable-3" 
+           class="draggable"
+           draggable="true"
+           ondragstart="onDragStart(event)"
+      >
+        Solid Specifications
+      </div>
+
+    </div><!-- /dragFromZone -->
+
+    <div class="dropzone dndContainer"
+         ondragover="onDragOver(event)"
+         ondrop="onDrop(event)"
+    >
+      <H2>Selected Pods, Tools, And Apps</H2>
+    </div>
+
+  </div>
+
+</body></html>

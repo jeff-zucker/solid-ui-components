@@ -16,7 +16,11 @@ export async function draggable(thing){
   let header =  document.createElement('DIV');
   let close =  document.createElement('SPAN');
   let content =  document.createElement('DIV');
-  content = await getDraggableContent(component,content);
+  let pageEl = document.getElementById('right-column-tabulator');
+  content.innerHTML = pageEl.innerHTML;
+  pageEl.innerHTML = "";
+//  pageEl.style.display="none";
+//  content = await getDraggableContent(component,content);
   div.id = id;
 
   close.innerHTML=" X ";
@@ -38,6 +42,8 @@ export async function draggable(thing){
   div.style.background ||= "#f1f1f1";
   div.style.border ||= "1px solid #d3d3d3";
   div.style["text-align"] ||= ":center";
+//  div.style.height="80%";
+//  div.style.width="80%";
 
   /* STYLE OF DRAGGABLE DIV'S HEADER */
   header.style = component.headerStyle || {};

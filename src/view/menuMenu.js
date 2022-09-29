@@ -1,4 +1,7 @@
 export async function menuOfMenus(json){
+    if(json.displayArea && json.startingContent){
+      await solidUI.util.show('',json.startingContent,'',json.displayArea);
+    }
     let div = document.createElement('DIV');
     div.id =  json.contentSource.replace(/.*\#/,'');
     let html = "";

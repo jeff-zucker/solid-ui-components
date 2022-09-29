@@ -81,7 +81,6 @@ if(typeof panes !="undefined") window.outliner = panes.getOutliner(document);
   }
 
   async showPage(event,json,obj){
-console.log('SHOW PAGE')
      if(event && event.preventDefault) event.preventDefault();
      event ||= {target:{tagName:""}};
      event.target.dataset ||= {};
@@ -109,9 +108,9 @@ console.log('SHOW PAGE')
      type ||= event.target.dataset.contenttype || u.findType(url);
      if(solidUI.showFunction) return await solidUI.showFunction(type,url,json.displayArea,true,obj);
      let content
-     if(obj.displayTarget && obj.displayTarget.match(/#Draggable/)){
+// ignore draggables for now
+     if(0 && obj.displayTarget && obj.displayTarget.match(/#Draggable/)){
        let outerContent = (await u.show(type,url,"","",true,obj)).outerHTML;
-//       alert(outerContent)
        await draggable({
           label : obj.label,
           content : outerContent,
@@ -119,6 +118,7 @@ console.log('SHOW PAGE')
        return;
      }
      else {
+       if(obj.plugin) obj.dataSourceType ||= 'SolidOSLink';
        content =  await u.show(type,url,"",json.displayArea,true,obj)
      }
      return content;

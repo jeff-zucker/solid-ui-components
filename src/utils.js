@@ -177,6 +177,7 @@ newElement(tag,id,classList,value){
     return div;
   },
   html : async (uri,string,targetSelector) => {
+    if(uri.match(/\.(md|markdown)$/)) return this._show['markdown'](uri,string,targetSelector);
     string ||= (await this.loadFile(uri)).body;
     if(targetSelector) return this.showIframeSrcDoc(string,uri,targetSelector);
     let div = document.createElement("DIV");
@@ -201,7 +202,6 @@ newElement(tag,id,classList,value){
   },
   markdown : async (uri,string,targetSelector) => {
     string ||= (await this.loadFile(uri)).body;
-    // string ||= await this.loadFile(uri);
     let parsedString = marked.parse(string);
     if(targetSelector){
       return this.showIframeSrcDoc(parsedString,uri,targetSelector);
@@ -231,6 +231,7 @@ newElement(tag,id,classList,value){
       let displayTarget = obj ?obj.displayTarget :"";
       if(plugin.match(/ProfileEditor/)) wantedPane = "editProfile";
       if(plugin.match(/PreferencesEditor/)) wantedPane = "basicPreferences";
+//console.log(obj);
       wantedPane = wantedPane ?panes.byName(wantedPane) :null;
       const params = new URLSearchParams(location.search)
       url = url.uri ?url.uri :url;
@@ -345,6 +346,7 @@ alert(x)
 */
   },
   rdf : async (uri,string,targetSelector,forceReload,obj) => {
+    obj ||= {};
     if(obj.dataSourceType){
         return await this._show[obj.dataSourceType](uri,string,targetSelector,forceReload,obj);
     }
@@ -557,11 +559,28 @@ async crossLoad(uri,string,forceReload){
   i.editable = true;
   return i;
 } 
-async loadFile(uri){
+async gitApiFetch(uri){
+  uri = uri.replace(/https:\/\/github.com/,'https://api.github.com/repos');
+  uri = uri.replace(/blob\/main\//,'contents');
+  const options = {Accept: "application/vnd.github.v3+html"};
+  let response = await fetch(uri,options);
+console.log(await response.text() );
+//  let json = await response.json();
+//  return atob(json.content);
+}     
+
+async loadFile(uri,isRepeat){
   let fileInfo = this.fileInfo(uri);
+  if(uri.match(/https:\/\/github.com/)) {
+    fileInfo.body = await this.gitApiFetch(uri);
+    fileInfo.editable = !fileInfo.contentType.match(/(image|video|audio|pdf|unknown)/);
+    fileInfo.ok=true;
+    return fileInfo;  
+  }
   try {
      // OMIT CREDENTIALS NEEDED FOR MOST FETCHES
-     let response = await UI.store.fetcher.webOperation("GET",uri,{credentials:"omit"});
+     let creds = isRepeat ?{mode:"no-cors"} :{credentials:"omit"}
+     let response = await UI.store.fetcher.webOperation("GET",uri,creds);
      if(response.ok) {
        fileInfo.contentType = response.headers.get("Content-Type");
        fileInfo.editable = !fileInfo.contentType.match(/(image|video|audio|pdf|unknown)/);
@@ -571,7 +590,11 @@ async loadFile(uri){
      else alert("utils.loadFile() "+response.status)
      return fileInfo
   }
-  catch(e) { alert("network loadFile() "+e); return fileInfo }
+  catch(e) {
+     console.log('failed load, trying proxy'+e)
+     if(!isRepeat) return this.loadFile("https://solidcommunity.net/proxy?uri="+encodeURI(uri),'repeat');
+//   alert("network loadFile() "+e); return fileInfo 
+  }
 }
 
 getUItype(subject){
