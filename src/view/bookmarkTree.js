@@ -2,7 +2,7 @@ export class BookmarkTree {
 
   constructor(){
     this.store = UI.rdf.graph();
-    this.fetcher = UI.rdf.fetcher(this.store);
+    this.fetcher = UI.rdf.fetcher(this.store,{fetch:UI.store.fetcher._fetch});
   }
   async init(){
     for(let containerElm of document.getElementsByClassName('ocb')){
@@ -51,6 +51,7 @@ export class BookmarkTree {
     let subTopics  = this.store.each( null, book('subTopicOf'), topic )
     if(subTopics.length>0){
       let ul = document.createElement('UL')
+      ul.classList.add('bookmarkTree')
       ul.classList.add('nested')
       li.appendChild(ul)
       for(let t in subTopics){

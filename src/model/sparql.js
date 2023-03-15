@@ -1,17 +1,46 @@
+  /*
+     const results = runQuery({
+       ?template : String|Null,
+       ?displayArea : String|Null,
+       endpoint : String,
+       query : String
+     });
+
+     Note : If template is provided, results will be an HTMLElement, else an array.
+     Note : If template and displayArea are provided, the displayArea will be populated
+     with the template interpolated with the results.
+     
+  */
+
+export async function runQuery(options){
+   const sparql = new Sparql();
+   let results = await sparql.sparqlQuery(options.endpoint,options.query);
+   options.template ||= 'ui:Table';
+   results = await solidUI.processTemplate(options.template,results);
+   if(options.displayArea){
+     const d = (typeof options.displayArea==="string") ?document.querySelector(options.displayArea) :options.displayArea;
+     d.innerHTML="";
+     d.appendChild(results);
+   }
+   return results;
+}
+
 export class Sparql {
 
   async sparqlQuery(endpoint,queryString,forceReload){
+    if( endpoint.startsWith('/') ){
+      endpoint = window.origin + endpoint;
+    }
+    else if( endpoint.startsWith('./') ){
+      let loc = window.location.href;
+      endpoint = loc.replace(/\/[^\/]*$/,'') + endpoint.replace(/^\./,'');
+    }
     if(typeof Comunica !="undefined")
       return await this.comunicaQuery(endpoint,queryString,forceReload);
     else   
       return await this.rdflibQuery(endpoint,queryString,forceReload);  
   }
 
-/* REPLACED
-  async rdflibQuery(solidUI,kb,endpoint,queryString,json){
-    await solidUI.loadUnlessLoaded(endpoint);
-*/
-/* NEW */
   async rdflibQuery(endpoint,queryString,forceReload){
 /*
     kb = UI.store
@@ -19,11 +48,7 @@ export class Sparql {
 */
     const kb = UI.rdf.graph();
     const fetcher = UI.rdf.fetcher(kb);
-
-//    if(forceReload || !kb.any(null,null,null,UI.rdf.sym(endpoint)))
-      await kb.fetcher.load(endpoint);
-/* END-NEW */
-
+    await kb.fetcher.load(endpoint);
     try {
       const preparedQuery=await UI.rdf.SPARQLToQuery(queryString,false,kb);
       let wanted = preparedQuery.vars.map( stm=>stm.label );
@@ -63,7 +88,7 @@ export class Sparql {
       if( !e[1] ||  !e[1]._root || !e[1]._root.entries ) continue;
       e = e[1]._root.entries
       let row = {} ;
-      for(let i in e){
+      for(let i in e.reverse()){
         let key = munge( e[i][0].replace(/^\?/,''))
         row[key] = row[key] || "";
         let value = munge(e[i][1].id)

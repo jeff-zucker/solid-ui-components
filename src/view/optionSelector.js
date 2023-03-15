@@ -20,7 +20,7 @@ export function optionSelector(j) {
     collectionSelector.style.background=j.background;
     collectionSelector.style.color= j.color;
     j.parts ||= j.dataSource.parts;
-    const firstOption = j.label || (j.parts[0]).label || j.parts[0];
+    const firstOption = j.label || j.parts[0] ?(j.parts[0]).label || j.parts[0]:"";
     collectionSelector.innerHTML = `<div style="border-bottom:1px solid ${borderColor}; padding:0.5em;cursor:pointer;"><span style="display:table-cell;width:100%">${firstOption}</span><span style="display:table-cell;width:100%;text-align:right;">⌄</span></div>`;
     let collectionsList = document.createElement('DIV');
     collectionSelector.querySelector('div').onclick=()=>{
@@ -29,6 +29,8 @@ export function optionSelector(j) {
       else collectionsList.style.display="block";     
     }
     for(let p of j.parts){
+      p.link ||= p.value;
+      p.type ||= p.contentType;
       collectionsList.innerHTML += `<a href="${p.link}" style="text-decoration:none;display:block;border-bottom:1px solid ${borderColor}; padding:0.5em; background-color:${j.highlight};color:${j.color}" data-label="${p.label}" data-link="${p.link}" data-type="${p.type}">${p.label}</a>`;
     }
     let anchorList = collectionsList.querySelectorAll('A');
@@ -54,13 +56,15 @@ export function optionSelector(j) {
        collectionsList.style = `border:1px solid ${borderColor};border-top:none;height:${j.size}`;
        collectionsList.style.overflow="auto";
        collectionsList.style["max-height"]=j.size;
-       collectionsList.style["border-radius"]="0.4rem";
+//       collectionsList.style["border-radius"]="0.4rem";
     }
     else {
       collectionsList.style=`border:1px solid ${borderColor};border-top:none;display:none`;
-      collectionSelector.style["border-radius"]="0.4rem";
+//      collectionSelector.style["border-radius"]="0.4rem";
+      collectionSelector.style["margin-bottom"]="0.4rem";
       wrapper.appendChild(collectionSelector);
     }
+    collectionsList.style["margin-bottom"]="0.4rem";
     wrapper.appendChild(collectionsList);
     return wrapper;
   }

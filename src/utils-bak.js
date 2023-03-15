@@ -202,19 +202,13 @@ newElement(tag,id,classList,value){
     }
   },
   markdown : async (uri,string,targetSelector,force,obj) => {
-    if(solidUI.hideTabulator) solidUI.hideTabulator();
     string ||= (await this.loadFile(uri)).body;
-//    string = `<div class="markdown-content" style="background:${solidUI.background};color:${solidUI.color}">\n\n${string}\n</div>`;
+    string = `<div class="markdown-content">\n\n${string}\n</div>`;
     let parsedString = marked.parse(string);
     if(obj && obj.styleSheet) 
-      parsedString=`<link rel="stylesheet" href="${obj.styleSheet}">`+parsedString
-    const bodyStyle = `
-      <body class="markdown-content" 
-            style="background:${solidUI.pageBackground};color:${solidUI.pageColor}"
-      >
-    `;
+      parsedString = `<link rel="stylesheet" href="${obj.styleSheet}">${parsedString}`;
     if(targetSelector){
-      let iframe = this.showIframeSrcDoc(parsedString,uri,targetSelector,bodyStyle);
+      let iframe = this.showIframeSrcDoc(parsedString,uri,targetSelector);
 //      iframe.classList.add('markdown-content');
       return iframe;
     }
@@ -230,9 +224,9 @@ newElement(tag,id,classList,value){
   SolidOSLink : async (url,string,targetSelector,forceReload,obj)=>{
     url ||= obj.href;
     if(solidUI.showTabulator) solidUI.showTabulator();
-    let targetElement = document.getElementById('suicTabulator') || targetSelector
-    if(targetElement) targetElement.style.display="block";
-    let targetOutline = targetElement ?targetElement.querySelector('#outline') || targetElement.querySelector('.outline') :null;
+      let targetElement = document.getElementById('suicTabulator') || targetSelector
+      if(targetElement) targetElement.style.display="block";
+      let targetOutline = targetElement ?targetElement.querySelector('#outline') || targetElement.querySelector('.outline') :null;
       if(!targetOutline) {
         targetElement=makeOutline();
         targetOutline =  targetElement.querySelector('.outline') ;
@@ -247,30 +241,14 @@ newElement(tag,id,classList,value){
       if(plugin.match(/PreferencesEditor/)) wantedPane = "basicPreferences";
 //console.log(obj);
       wantedPane = wantedPane ?panes.byName(wantedPane) :null;
-//      wantedPane ||= panes.byName('humanReadable');
       const params = new URLSearchParams(location.search)
       url = url.uri ?url.uri :url;
       params.set('uri', url);
       //setHistory(window.orgin+'/cm/?uri='+url);
       let thisApp = '/cm/'
-      await window.outliner.GotoSubject(subject,true,wantedPane,true,null,targetOutline);
-      window.history.replaceState({}, '', `${thisApp}?${params}`);
+      window.outliner.GotoSubject(subject,true,wantedPane,true,null,targetOutline);
+//      window.history.replaceState({}, '', `${thisApp}?${params}`);
       return targetOutline;
-// REMOVE? ... needed for SolidOS Tools
-      let newTR = document.createElement('TR');
-      let firstTR=document.querySelector('table tr');
-      newTR.style['vertical-align']="top";
-      newTR.innerHTML = firstTR.innerHTML;
-      let newOutline = document.createElement('TABLE');
-      newOutline.id = "outline";
-      newOutline.style.width="100%";
-      newOutline.appendChild(newTR);
-      targetOutline.replaceWith(newOutline)
-console.log(22,targetOutline,newOutline)
-      targetOutline = newOutline
-console.log(23,targetOutline,newOutline)
-      return targetOutline;
-
       function makeOutline(){
         let div = document.createElement('DIV');
         div.classList.add('TabulatorOutline');
@@ -377,7 +355,6 @@ alert(x)
   },
   rdf : async (uri,string,targetSelector,forceReload,obj) => {
     obj ||= {};
-if(solidUI.showTabulator) solidUI.showTabulator();
     if(obj.dataSourceType){
         return await this._show[obj.dataSourceType](uri,string,targetSelector,forceReload,obj);
     }
@@ -476,15 +453,14 @@ showIframeSrc(src,targetSelector){
   if(targetSelector) this.show_iframe(iframe,targetSelector);
   else return iframe;
 }
-showIframeSrcDoc(content,uri,targetSelector,body){
-  body  ||= "<body>"
+showIframeSrcDoc(content,uri,targetSelector){
   let iframe = this.makeIframe();
   content = content.replace(/X-Frame-Options/g,'');
   if(uri) {
     uri = new URL(uri);
   }
    const b = uri ?`<base href="${uri.origin}${uri.pathname}">` :"";
-   iframe.srcdoc = `${body}${b}${content}</body>`
+   iframe.srcdoc = `<body>${b}${content}</body>`
    iframe.scrollTo({ top: 0, behavior: "smooth" });
    return this.show_iframe(iframe,targetSelector);
 }
@@ -517,9 +493,6 @@ showIframeSrcDoc(content,uri,targetSelector,body){
       optionEl.style.color = o.lightBackground;
 //      optionEl.innerHTML = option.replace(/http[s]*:\/\/[^\/]*\//,'') || option;
       optionEl.value = optionEl.title = value;
-      optionEl.style.fontSize = "large";
-      optionEl.style.color = o.color || solidUI.buttonColor;
-      optionEl.style.backgroundColor = o.background || solidUI.buttonBackground;
       optionEl.innerHTML = label;
       selectEl.appendChild(optionEl);
     }
@@ -645,8 +618,6 @@ async loadFile(uri,isRepeat){
      console.log('failed load, trying proxy'+e)
      if(!isRepeat) return this.loadFile("https://solidcommunity.net/proxy?uri="+encodeURI(uri),'repeat');
      if(!isRepeat) return this.loadFile("https://solidcommunity.net/proxy?uri="+encodeURI(uri),'repeat');
-//     if(!isRepeat) return this.loadFile("https://solidcommunity.net/proxy?uri="+encodeURI(uri),'repeat');
-//     if(!isRepeat) return this.loadFile("https://solidcommunity.net/proxy?uri="+encodeURI(uri),'repeat');
   }
 }
 

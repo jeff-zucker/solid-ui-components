@@ -28,6 +28,7 @@ export class Form {
     });
   }
 async render(o){
+    o.form ||= o.contentSource;
     const dom = o.dom || document;
     const container = document.createElement("DIV");
     container.classList.add('uic-form');

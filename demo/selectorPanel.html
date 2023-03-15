@@ -1,0 +1,37 @@
+<body>
+  <div id="results"></div>
+
+<script type="module" src="../node_modules/solid-ui/dist/main.js"></script>
+<script type="module">
+  let options = {
+    background : "#661177",
+         color : "#ffffff",
+          size : 5,
+     highlight : "#aa55bb",
+      onchange : (label,link,type)=> { alert(label+link+type); },
+         parts : [
+           {label:"foo", link:"http://example.com/link1", type:"typeX" },
+           {label:"bar", link:"http://example.com/link2", type:"typeY" },
+           {label:"foo", link:"http://example.com/link1", type:"typeX" },
+           {label:"bar", link:"http://example.com/link2", type:"typeY" },
+           {label:"foo", link:"http://example.com/link1", type:"typeX" },
+           {label:"bar", link:"http://example.com/link2", type:"typeY" },
+         ]
+  }
+  import {selectorPanel} from "../src/view/selectorPanel.js";
+  let selectorElm = selectorPanel(options);
+  console.log(selectorElm)
+  document.getElementById('results').appendChild(selectorElm);
+</script>
+<style>
+body { 
+  background:black;
+}
+* {
+  font-family:Sans-Serif;
+  font-size:large;
+}
+#results {
+  max-width:30ch;
+}
+</style>

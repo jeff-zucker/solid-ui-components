@@ -1,0 +1,11 @@
+<table style="border-collapse:collapse">
+  <!-- start-loop -->
+    <tr style="margin:1rem;border:1px solid black;padding:1rem;">
+      <th style="text-align:right;border:1px solid black">${col}</th>
+      <td style="border:1px solid black">${row[col]}</td>
+    </tr>
+  <!-- end-loop -->
+</table>
+<style>
+  
+</style>

@@ -7,16 +7,17 @@ body {
 */
 #ocbStart {
   display:block;
+  display:none !important;
   margin-bottom:0.5rem;
   margin-top:0.5rem;
-  margin-left:-0.25rem;
+//  margin-left:-0.25rem;
 }
-#mainMenu {
+.bookmarkTree #mainMenu {
   display:block;
   text-align:right;
   width:100%;
 }
-#sidebar {
+.bookmarkTree #sidebar {
     position:absolute;
     top:1vh;
     left:1vw;
@@ -26,7 +27,7 @@ body {
     padding-right:0;
     overflow-y:scroll;
 }
-#MyDisplay, iframe {
+.bookmarkTree #MyDisplay, .bookmarkTree #MyDisplay iframe {
     position:absolute;
     top:0;
     left:25vw;
@@ -36,49 +37,51 @@ body {
     border:none;
     overflow-y:scroll;
 }
+/*
 body.collapsed #sidebar { width:4vw; }
 body.collapsed #MyDisplay { width:96vw; left:4vw;}
 body.collapsed #bmarkMenu { display:none; }
-
-.item {
+*/
+.bookmarkTree .item {
   margin-top:0.4em;
 }
-ul {
+ul.bookmarkTree {
   list-style-type : none;
   margin:0;
   padding:0;
   margin-left:0.25em;
 }
-ul ul {
+ul.bookmarkTree ul {
   list-style-type : none;
-  margin-left:1em;
+  margin-left:0.75em !important;
+  padding-left:0;
 }
-li.item {
+.bookmarkTree li.item {
   margin-bottom:0;
 }
 
 /* Remove default bullets */
-#myUL ul {
+.bookmarkTree #myUL ul {
   list-style-type: none;
   padding-left:1em;
 }
 
 /* Remove margins and padding from the parent ul */
-#myUL {
+.bookmarkTree #myUL {
   margin: 0;
   padding: 0;
 }
 /* Style the caret/arrow */
-.caret {
+.bookmarkTree .caret {
   cursor: pointer;
   user-select: none; /* Prevent text selection */
 }
 
-.item {
+.bookmarkTree .item {
   cursor: pointer;
   user-select: none; /* Prevent text selection */
 }
-.item::before {
+.bookmarkTree .item::before {
   content: "\274f";
   content: "\2740";
   color: gray;
@@ -87,7 +90,7 @@ li.item {
 }
 
 /* Create the caret/arrow with a unicode, and style it */
-.caret::before {
+.bookmarkTree .caret::before {
   content: "\25B6"; 
 /*  content: "\266C"; // music notes */
   color: gray;
@@ -102,16 +105,16 @@ li.item {
 }
 
 /* Rotate the caret/arrow icon when clicked on (using JavaScript) */
-.caret-down::before {
+.bookmarkTree .caret-down::before {
   transform: rotate(90deg);
 }
 
 /* Hide the nested list */
-.nested {
+.bookmarkTree .nested {
   display: none;
 }
 
 /* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
-.active {
+.bookmarkTree .active {
   display: block;
 }

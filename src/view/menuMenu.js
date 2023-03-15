@@ -1,17 +1,22 @@
 export async function menuOfMenus(json){
-    if(json.displayArea && json.startingContent){
-      await solidUI.util.show('',json.startingContent,'',json.displayArea);
+    let target = document.querySelector(json.displayArea);
+    if(target && json.startingContent){
+      let content = await solidUI.processComponentSubject(json.startingContent)
+      if(content) target.appendChild(content)
+//      await solidUI.util.show('',content,'',json.displayArea);
     }
     let div = document.createElement('DIV');
     div.id =  json.contentSource.replace(/.*\#/,'');
     let html = "";
+//    if(!json.dataSource.dataSource) json.dataSource.dataSource = json.dataSource;
     for(let ds of json.dataSource){
       let component = ds.directDisplay ?ds.dataSource :ds.id
       ds.directDisplay ||= "";
-      html += `<button about="${component}" data-directDisplay="${ds.directDisplay}">${ds.label}</button>`;
+      if(ds.plugin && ds.plugin.match(/External/)) ds.external = "true";
+      html += `<button about="${component}" data-directDisplay="${ds.directDisplay}" data-external="${ds.external}">${ds.label}</button>`;
     }
     div.innerHTML = html;
-    let targetElement = document.querySelector(json.contentArea);
+    let targetElement = typeof json.contentArea==="string" ?document.querySelector(json.contentArea) :solidUI.currentElement;
     targetElement.innerHTML = "";
     targetElement.appendChild(div)
     let moreHtml = ""
@@ -24,12 +29,21 @@ export async function menuOfMenus(json){
     }
     let buttons = targetElement.querySelectorAll('BUTTON');
     for(let button of buttons){
+      button = solidUI.styleButton(button,json);
       let tag  = button.getAttribute('about');
       button.addEventListener('click',async(e)=>{
         e.preventDefault();
-        if(button.getAttribute('data-directDisplay')){
-          await solidUI.showPage(null,{link:button.getAttribute('about'),displayArea:targetElement}); 
+        let external = button.getAttribute('data-external');
+        external = external==="undefined" ?null :external;
+        let direct = button.getAttribute('data-directDisplay');
+        direct = direct==="undefined" ?null :direct;
+        let href = button.getAttribute('about');
+        if(direct){
+          await solidUI.showPage(null,{link:href,displayArea:targetElement}); 
           return;
+        }
+        if(external) {
+          return solidUI.processComponentSubject(href)
         }
         let divs = targetElement.querySelectorAll(json.contentArea + ' > DIV');
         for(let d of divs){

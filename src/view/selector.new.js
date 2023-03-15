@@ -1,5 +1,3 @@
-   import {optionSelector} from './optionSelector.js';
-
   /*
      containerSelector
        url
@@ -39,19 +37,21 @@ export async function podSelector(component){
   };
   pods = await selector(pods,podsOnchange,null,null,6,component);
 //  pods.style.height="2rem";
-  let container = pods[0] ?pods[0].value :pods;
-
+  let container = pods[0].value;
+/*
   let hostEl = document.createElement('DIV');
     hostEl.style = "width:100% !important;text-align:right";
     hostEl.innerHTML = `
        <span style="color:white !important">Pod Explorer</span>
        <a href="${container}" style="display:inline-block !important;color:gold !important;text-align:right !important;"><img src="https://solidproject.org/assets/img/solid-emblem.svg" style="height:2rem;width:2rem;margin-left:2rem;" /></a>
     `;
+*/
     let targetArea = typeof component.contentArea==="string" ?document.querySelector(component.contentArea) :component.contentArea;
+console.log(78,targetArea);
   targetArea.innerHTML="";
-  targetArea.appendChild(hostEl);
+//  targetArea.appendChild(hostEl);
   targetArea.appendChild(pods);
-  component.dataSource = pods[0] ?pods[0].value :pods;
+  component.dataSource = pods[0].value;
   let resources = await resourceSelector(component);
 }
 
@@ -61,22 +61,13 @@ export async function resourceSelector(json){
     let collectionSize = json.collectionSize || 6;
     let resourceSize = json.resourceSize || 10;
     let resourceOnchange = json.onchange;
-    if(typeof solidUI !="undefined") {
-      resourceOnchange ||= async (label,link,cType)=>{
-        await solidUI.showPage(null,null,{label,link,cType})
-      };
-    }
+    if(typeof solidUI !="undefined") resourceOnchange ||= async (e)=>{await solidUI.showPage(e,json)};
     const ldp = UI.rdf.Namespace("http://www.w3.org/ns/ldp#");
     if(!url) return "";
     let container = url.replace(/\/[^\/]*$/,'/'); // in case we get passed a resource
     let host = _host(container);
     const base = UI.rdf.sym(container);
-    try {
-      await UI.store.fetcher.load(base);
-    }
-    catch(e) {
-      alert(e)
-    }
+    await UI.store.fetcher.load(base);
     let files = UI.store.each(base,ldp("contains"),null,base);
     let resources = [];
     let containers=[];
@@ -85,7 +76,7 @@ export async function resourceSelector(json){
       let name = file.value
       let contentType=_findContentType(file);
       if( _isHidden(name) ) continue; 
-      if(name.endsWith('/')) containers.push({value:name,label:_pathname(name),contentType:'text/turtle'});
+      if(name.endsWith('/')) containers.push({value:name,label:_pathname(name),contentType});
       else resources.push({value:name,label:_pathname(name),contentType});
     }
     let parent = base.uri.replace(/\/$/,'').replace(/\/[^\/]*$/,'/');
@@ -95,23 +86,14 @@ export async function resourceSelector(json){
       }
     }
     let x = ()=>{};
-    let containerOnchange = async (selectorElement,link)=>{
-       let newContainer = link ?link :selectorElement.target.value;
+    let containerOnchange = async (selectorElement)=>{
+       let newContainer = selectorElement.target.value;
        json.dataSource = newContainer;
-/*
        let thisContainerArea = document.querySelector('#PodSelector .containerSelector');
-*/
        let newC =  await resourceSelector(json);
-/*
        thisContainerArea.replaceWith(newC);
+console.log(88,newC)
        return thisContainerArea;
-*/
-       let areaToWriteIn = document.querySelector('#PodSelector');
-       if(areaToWriteIn){
-         areaToWriteIn.innerHTML = "";
-         areaToWriteIn.appendChild(newC);
-       }
-       return newC;
     };
     containers = await selector(containers,containerOnchange,url,null,collectionSize,json)
     resources =  await selector(resources,resourceOnchange,url,null,resourceSize,json)
@@ -124,14 +106,7 @@ export async function resourceSelector(json){
     }
 //    if(targetSelector) div = targetSelector.querySelector("#PodSelector");
     let div=document.createElement('DIV');
-  let hostEl = document.createElement('DIV');
-    hostEl.style = "width:100% !important;text-align:right";
-    hostEl.innerHTML = `
-       <span style="color:white !important">Pod Explorer</span>
-       <a href="${container}" style="display:inline-block !important;color:gold !important;text-align:right !important;"><img src="https://solidproject.org/assets/img/solid-emblem.svg" style="height:2rem;width:2rem;margin-left:2rem;" /></a>
-    `;
     div.innerHTML = "";
-    div.appendChild(hostEl);
     div.id = "PodSelector"
     if(containers) div.appendChild(containers);    
     if(resources) div.appendChild(resources);    
@@ -160,7 +135,6 @@ export async function resourceSelector(json){
     name = name.pathname;
     name= name.endsWith('/') ?name.replace(/^\//,'') :name.replace(/.*\//,'');
     if(name.startsWith('.') ) return true;
-    if(name.match(/\/\./) ) return true;
     if(name.endsWith('~') ) return true;
   }
   function _pathname(path){
@@ -202,17 +176,6 @@ export async function resourceSelector(json){
       if(!label.endsWith("/")) label = label.replace(/.*\//,'')
       return label || "/";
     }
-//...
-   for(let o of options){
-     o.label = mungeLabel(o.label);
-   }
-   return optionSelector({
-     parts : options,
-     onchange,
-     size,
-   });
-//...
-
     function addAttributes(option,optionEl){
       if(Object.keys(option).length>2){
         for(let k of Object.keys(option)){
@@ -261,10 +224,10 @@ export async function resourceSelector(json){
 //         label = label.replace(/.*\//,'')
 //      label ||= "/";
       let optionEl = document.createElement('OPTION');
-      optionEl.style["font-size"]="large";
+      optionEl.style["font-size"]="18px";
 //      optionEl.style = "padding:0.25em;";
-      optionEl.style.background = o.background || solidUI.buttonBackground;
-      optionEl.style.color = o.color || solidUI.buttonColor;
+      optionEl.style.background = o.lightBackground;
+      optionEl.style.color = o.lightBackground;
       optionEl.value = value;
       optionEl.title = value+"\n"+(option.contentType||"");
       optionEl.dataset ||= {};
